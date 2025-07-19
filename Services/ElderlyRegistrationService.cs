@@ -1,6 +1,6 @@
 ﻿using Oracle.ManagedDataAccess.Client;
 using System.Data;
-
+using ElderlyCareSystem.Dtos;
 public class ElderlyRegistrationService
 {
     private readonly string connectionString;
