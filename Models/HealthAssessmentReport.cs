@@ -4,29 +4,33 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ElderlyCareSystem.Models
 {
-    [Table("HealthAssessmentReport")]
+    [Table("HEALTHASSESSMENTREPORT")]
     public class HealthAssessmentReport
     {
         [Key]
-        [Column("assessment_id")]
+        [Column("ASSESSMENT_ID")]
         public int AssessmentId { get; set; }
 
-        [Column("elderly_id")]
+        [Column("ELDERLY_ID")]
         public int ElderlyId { get; set; }
 
-        [Column("assessment_date")]
+        [Column("ASSESSMENT_DATE")]
         public DateTime AssessmentDate { get; set; }
 
-        [Column("Physical_health_function")]
+        [Column("PHYSICAL_HEALTH_FUNCTION")]
         public int PhysicalHealthFunction { get; set; }
 
-        [Column("Psychological_function")]
+        [Column("PSYCHOLOGICAL_FUNCTION")]
         public int PsychologicalFunction { get; set; }
 
-        [Column("Cognitive_function")]
+        [Column("COGNITIVE_FUNCTION")]
         public int CognitiveFunction { get; set; }
 
-        [Column("Health_grade")]
+        [Required]
+        [MaxLength(20)]
+        [Column("HEALTH_GRADE")]
         public string HealthGrade { get; set; }
+
+       
     }
 }

@@ -4,32 +4,32 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ElderlyCareSystem.Models
 {
-    [Table("ElderlyInfo")]
+    [Table("ELDERLYINFO")]
     public class ElderlyInfo
     {
         [Key]
-        [Column("elderly_id")]
+        [Column("ELDERLY_ID")]
         public int ElderlyId { get; set; }
 
-        [Required, Column("name")]
+        [Required, Column("NAME"), MaxLength(50)]
         public string Name { get; set; }
 
-        [Column("gender")]
+        [Column("GENDER"), MaxLength(10)]
         public string Gender { get; set; }
 
-        [Column("birth_date")]
+        [Column("BIRTH_DATE")]
         public DateTime? BirthDate { get; set; }
 
-        [Column("id_card_number")]
+        [Column("ID_CARD_NUMBER"), MaxLength(20)]
         public string IdCardNumber { get; set; }
 
-        [Column("contact_phone")]
+        [Column("CONTACT_PHONE"), MaxLength(20)]
         public string ContactPhone { get; set; }
 
-        [Column("address")]
+        [Column("ADDRESS"), MaxLength(200)]
         public string Address { get; set; }
 
-        [Column("emergency_contact")]
+        [Column("EMERGENCY_CONTACT"), MaxLength(50)]
         public string EmergencyContact { get; set; }
     }
 }

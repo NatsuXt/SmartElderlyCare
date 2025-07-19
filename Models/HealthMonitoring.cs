@@ -4,32 +4,38 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ElderlyCareSystem.Models
 {
-    [Table("HealthMonitoring")]
+    [Table("HEALTHMONITORING")]
     public class HealthMonitoring
     {
         [Key]
-        [Column("monitoring_id")]
+        [Column("MONITORING_ID")]
         public int MonitoringId { get; set; }
 
-        [Column("elderly_id")]
+        [Column("ELDERLY_ID")]
         public int ElderlyId { get; set; }
 
-        [Column("monitoring_date")]
+        [Column("MONITORING_DATE")]
         public DateTime MonitoringDate { get; set; }
 
-        [Column("heart_rate")]
+        [Column("HEART_RATE")]
         public int HeartRate { get; set; }
 
-        [Column("blood_pressure")]
+        [MaxLength(20)]
+        [Column("BLOOD_PRESSURE")]
         public string BloodPressure { get; set; }
 
-        [Column("oxygen_level")]
-        public float OxygenLevel { get; set; }
+        [Column("OXYGEN_LEVEL")]
+        public decimal OxygenLevel { get; set; }
 
-        [Column("temperature")]
-        public float Temperature { get; set; }
+        [Column("TEMPERATURE")]
+        public decimal Temperature { get; set; }
 
-        [Column("status")]
+        [MaxLength(50)]
+        [Column("STATUS")]
         public string Status { get; set; }
+
+        // 可选：导航属性
+        // [ForeignKey("ElderlyId")]
+        // public ElderlyInfo Elderly { get; set; }
     }
 }

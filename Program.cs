@@ -1,10 +1,15 @@
+using ElderlyCareSystem.Data;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
-
+using Microsoft.EntityFrameworkCore;
+using Oracle.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// 添加 AppDbContext 注册（在这里添加）
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseOracle(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -17,7 +22,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 
 var supportedCultures = new[] { new CultureInfo("zh-CN") };
 var localizationOptions = new RequestLocalizationOptions

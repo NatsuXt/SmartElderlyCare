@@ -53,9 +53,10 @@ namespace ElderlyCareSystem.Controllers
                 MonitoringDate = DateTime.Now,
                 HeartRate = dto.Monitoring.HeartRate,
                 BloodPressure = dto.Monitoring.BloodPressure,
-                OxygenLevel = dto.Monitoring.OxygenLevel,
-                Temperature = dto.Monitoring.Temperature,
-                Status = dto.Monitoring.Status
+                OxygenLevel = (decimal)dto.Monitoring!.OxygenLevel,
+                Temperature = (decimal)dto.Monitoring!.Temperature,
+
+            Status = dto.Monitoring.Status
             };
             _context.HealthMonitoring.Add(monitoring);
 

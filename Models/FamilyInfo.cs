@@ -3,32 +3,35 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ElderlyCareSystem.Models
 {
-    [Table("FamilyInfo")]
+    [Table("FAMILYINFO")]
     public class FamilyInfo
     {
         [Key]
-        [Column("family_id")]
+        [Column("FAMILY_ID")]
         public int FamilyId { get; set; }
 
-        [Column("elderly_id")]
+        [Column("ELDERLY_ID")]
         public int ElderlyId { get; set; }
 
-        [Column("name")]
+        [Required, Column("NAME"), MaxLength(50)]
         public string Name { get; set; }
 
-        [Column("relationship")]
+        [Required, Column("RELATIONSHIP"), MaxLength(20)]
         public string Relationship { get; set; }
 
-        [Column("contact_phone")]
+        [Column("CONTACT_PHONE"), MaxLength(20)]
         public string ContactPhone { get; set; }
 
-        [Column("contact_email")]
+        [Column("CONTACT_EMAIL"), MaxLength(100)]
         public string ContactEmail { get; set; }
 
-        [Column("address")]
+        [Column("ADDRESS"), MaxLength(200)]
         public string Address { get; set; }
 
-        [Column("is_primary_contact")]
+        // 如果数据库是CHAR(1)且存的是 'Y'/'N'，你可以用string，也可以改成bool映射
+        [Column("IS_PRIMARY_CONTACT")]
         public string IsPrimaryContact { get; set; }
+
+        
     }
 }
