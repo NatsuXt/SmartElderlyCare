@@ -11,6 +11,7 @@ namespace ElderlyCareSystem.Models
         [Column("ASSESSMENT_ID")]
         public int AssessmentId { get; set; }
 
+        [ForeignKey(nameof(Elderly))]
         [Column("ELDERLY_ID")]
         public int ElderlyId { get; set; }
 
@@ -26,11 +27,9 @@ namespace ElderlyCareSystem.Models
         [Column("COGNITIVE_FUNCTION")]
         public int CognitiveFunction { get; set; }
 
-        [Required]
-        [MaxLength(20)]
-        [Column("HEALTH_GRADE")]
+        [Column("HEALTH_GRADE"), MaxLength(50)]
         public string HealthGrade { get; set; }
 
-       
+        public ElderlyInfo Elderly { get; set; }
     }
 }

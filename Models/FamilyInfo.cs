@@ -10,28 +10,29 @@ namespace ElderlyCareSystem.Models
         [Column("FAMILY_ID")]
         public int FamilyId { get; set; }
 
+        [ForeignKey(nameof(Elderly))]
         [Column("ELDERLY_ID")]
         public int ElderlyId { get; set; }
 
-        [Required, Column("NAME"), MaxLength(50)]
+        [Required]
+        [Column("NAME"), MaxLength(100)]
         public string Name { get; set; }
 
-        [Required, Column("RELATIONSHIP"), MaxLength(20)]
+        [Column("RELATIONSHIP"), MaxLength(50)]
         public string Relationship { get; set; }
 
         [Column("CONTACT_PHONE"), MaxLength(20)]
         public string ContactPhone { get; set; }
 
-        [Column("CONTACT_EMAIL"), MaxLength(100)]
+        [Column("CONTACT_EMAIL"), MaxLength(50)]
         public string ContactEmail { get; set; }
 
         [Column("ADDRESS"), MaxLength(200)]
         public string Address { get; set; }
 
-        // 如果数据库是CHAR(1)且存的是 'Y'/'N'，你可以用string，也可以改成bool映射
-        [Column("IS_PRIMARY_CONTACT")]
-        public string IsPrimaryContact { get; set; }
+        [Column("IS_PRIMARY_CONTACT"), MaxLength(1)]
+        public string IsPrimaryContact { get; set; }  // 'Y' or 'N'
 
-        
+        public ElderlyInfo Elderly { get; set; }
     }
 }

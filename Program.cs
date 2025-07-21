@@ -1,41 +1,33 @@
 using ElderlyCareSystem.Data;
-using Microsoft.AspNetCore.Localization;
-using System.Globalization;
-using Microsoft.EntityFrameworkCore;
-using Oracle.EntityFrameworkCore;
 using ElderlyCareSystem.Services;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// 添加 AppDbContext 注册（在这里添加）
+// 1. 配置数据库连接字符串，假设你用的是 SQL Server
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseOracle(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddScoped<ICheckInService, CheckInService>();
 
-// Add services to the container.
+// 2. 注入 CheckInService
+builder.Services.AddScoped<CheckInService>();
+
+// 3. 添加控制器服务
 builder.Services.AddControllers();
+
+// 4. 配置 Swagger（API文档，开发环境推荐开启）
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// 5. 中间件配置
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-var supportedCultures = new[] { new CultureInfo("zh-CN") };
-var localizationOptions = new RequestLocalizationOptions
-{
-    DefaultRequestCulture = new RequestCulture("zh-CN"),
-    SupportedCultures = supportedCultures,
-    SupportedUICultures = supportedCultures
-};
-
-app.UseRequestLocalization(localizationOptions);
-
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 
 app.UseAuthorization();
 

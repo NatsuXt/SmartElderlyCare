@@ -1,18 +1,14 @@
-﻿using ElderlyCareSystem.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using ElderlyCareSystem.Data;
 using ElderlyCareSystem.Dtos;
 using ElderlyCareSystem.Models;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace ElderlyCareSystem.Services
 {
-    public interface ICheckInService
-    {
-        Task<int> FullRegisterAsync(ElderlyFullRegistrationDto dto);
-    }
-
-    public class CheckInService : ICheckInService
+    public class CheckInService
     {
         private readonly AppDbContext _context;
 
@@ -21,59 +17,71 @@ namespace ElderlyCareSystem.Services
             _context = context;
         }
 
-        public async Task<int> FullRegisterAsync(ElderlyFullRegistrationDto dto)
+        /// <summary>
+        /// 老人入住登记与初次健康评估（包括家属信息）
+        /// </summary>
+        public async Task<int> RegisterElderlyAsync(
+            ElderlyDto elderlyDto,
+            HealthAssessmentDto assessmentDto,
+            HealthMonitoringDto monitoringDto,
+            List<FamilyDto> familyDtos)
         {
+            // 1. 添加老人基本信息（默认入住状态可在这里设置，如有字段）
             var elderly = new ElderlyInfo
             {
-                Name = dto.Elderly.Name,
-                Gender = dto.Elderly.Gender,
-                BirthDate = dto.Elderly.BirthDate,
-                IdCardNumber = dto.Elderly.IdCardNumber,
-                ContactPhone = dto.Elderly.ContactPhone,
-                Address = dto.Elderly.Address,
-                EmergencyContact = dto.Elderly.EmergencyContact
+                Name = elderlyDto.Name,
+                Gender = elderlyDto.Gender,
+                BirthDate = elderlyDto.BirthDate,
+                IdCardNumber = elderlyDto.IdCardNumber,
+                ContactPhone = elderlyDto.ContactPhone,
+                Address = elderlyDto.Address,
+                EmergencyContact = elderlyDto.EmergencyContact
+                // 如果有入住状态字段，比如 Status = "入住"
             };
+            await _context.ElderlyInfos.AddAsync(elderly);
+            await _context.SaveChangesAsync(); // 保存，获取 ElderlyId
 
-            _context.ElderlyInfo.Add(elderly);
-            await _context.SaveChangesAsync();
-
+            // 2. 添加健康评估报告
             var assessment = new HealthAssessmentReport
             {
                 ElderlyId = elderly.ElderlyId,
-                AssessmentDate = DateTime.Now,
-                PhysicalHealthFunction = dto.Assessment.PhysicalHealthFunction,
-                PsychologicalFunction = dto.Assessment.PsychologicalFunction,
-                CognitiveFunction = dto.Assessment.CognitiveFunction,
-                HealthGrade = dto.Assessment.HealthGrade
+                AssessmentDate = assessmentDto.AssessmentDate,
+                PhysicalHealthFunction = assessmentDto.PhysicalHealthFunction,
+                PsychologicalFunction = assessmentDto.PsychologicalFunction,
+                CognitiveFunction = assessmentDto.CognitiveFunction,
+                HealthGrade = assessmentDto.HealthGrade
             };
-            _context.HealthAssessmentReport.Add(assessment);
+            await _context.HealthAssessmentReports.AddAsync(assessment);
 
+            // 3. 添加健康监测数据
             var monitoring = new HealthMonitoring
             {
                 ElderlyId = elderly.ElderlyId,
-                MonitoringDate = DateTime.Now,
-                HeartRate = dto.Monitoring.HeartRate,
-                BloodPressure = dto.Monitoring.BloodPressure,
-                OxygenLevel = (decimal)dto.Monitoring.OxygenLevel,
-                Temperature = (decimal)dto.Monitoring.Temperature,
-                Status = dto.Monitoring.Status
+                MonitoringDate = monitoringDto.MonitoringDate,
+                HeartRate = monitoringDto.HeartRate,
+                BloodPressure = monitoringDto.BloodPressure,
+                OxygenLevel = monitoringDto.OxygenLevel,
+                Temperature = monitoringDto.Temperature,
+                Status = monitoringDto.Status
             };
-            _context.HealthMonitoring.Add(monitoring);
+            await _context.HealthMonitorings.AddAsync(monitoring);
 
-            if (dto.Families != null && dto.Families.Any())
+            // 4. 添加家属信息
+            if (familyDtos != null)
             {
-                foreach (var family in dto.Families)
+                foreach (var f in familyDtos)
                 {
-                    _context.FamilyInfo.Add(new FamilyInfo
+                    var family = new FamilyInfo
                     {
                         ElderlyId = elderly.ElderlyId,
-                        Name = family.Name,
-                        Relationship = family.Relationship,
-                        ContactPhone = family.ContactPhone,
-                        ContactEmail = family.ContactEmail,
-                        Address = family.Address,
-                        IsPrimaryContact = family.IsPrimaryContact
-                    });
+                        Name = f.Name,
+                        Relationship = f.Relationship,
+                        ContactPhone = f.ContactPhone,
+                        ContactEmail = f.ContactEmail,
+                        Address = f.Address,
+                        IsPrimaryContact = f.IsPrimaryContact
+                    };
+                    await _context.FamilyInfos.AddAsync(family);
                 }
             }
 

@@ -1,26 +1,38 @@
-﻿using ElderlyCareSystem.Dtos;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using ElderlyCareSystem.Dtos;
 using ElderlyCareSystem.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 
 namespace ElderlyCareSystem.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class CheckInServiceController : ControllerBase
+    public class CheckInController : ControllerBase
     {
-        private readonly ICheckInService _checkInService;
+        private readonly CheckInService _checkInService;
 
-        public CheckInServiceController(ICheckInService checkInService)
+        public CheckInController(CheckInService checkInService)
         {
             _checkInService = checkInService;
         }
 
-        [HttpPost("full-register")]
-        public async Task<IActionResult> FullRegister([FromBody] ElderlyFullRegistrationDto dto)
+        [HttpPost("register")]
+        public async Task<IActionResult> RegisterElderly([FromBody] ElderlyFullRegistrationDto dto)
         {
-            var elderlyId = await _checkInService.FullRegisterAsync(dto);
-            return Ok(new { Message = "登记成功", ElderlyId = elderlyId });
+            if (dto == null || dto.Elderly == null || dto.Assessment == null || dto.Monitoring == null)
+            {
+                return BadRequest("参数不完整");
+            }
+
+            var elderlyId = await _checkInService.RegisterElderlyAsync(
+                dto.Elderly,
+                dto.Assessment,
+                dto.Monitoring,
+                dto.Families ?? new List<FamilyDto>()
+            );
+
+            return Ok(new { ElderlyId = elderlyId, Message = "老人入住登记成功" });
         }
     }
 }

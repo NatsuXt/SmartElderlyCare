@@ -11,6 +11,7 @@ namespace ElderlyCareSystem.Models
         [Column("MONITORING_ID")]
         public int MonitoringId { get; set; }
 
+        [ForeignKey(nameof(Elderly))]
         [Column("ELDERLY_ID")]
         public int ElderlyId { get; set; }
 
@@ -18,24 +19,20 @@ namespace ElderlyCareSystem.Models
         public DateTime MonitoringDate { get; set; }
 
         [Column("HEART_RATE")]
-        public int HeartRate { get; set; }
+        public int? HeartRate { get; set; }
 
-        [MaxLength(20)]
-        [Column("BLOOD_PRESSURE")]
+        [Column("BLOOD_PRESSURE"), MaxLength(20)]
         public string BloodPressure { get; set; }
 
         [Column("OXYGEN_LEVEL")]
-        public decimal OxygenLevel { get; set; }
+        public float? OxygenLevel { get; set; }
 
         [Column("TEMPERATURE")]
-        public decimal Temperature { get; set; }
+        public float? Temperature { get; set; }
 
-        [MaxLength(50)]
-        [Column("STATUS")]
+        [Column("STATUS"), MaxLength(20)]
         public string Status { get; set; }
 
-        // 可选：导航属性
-        // [ForeignKey("ElderlyId")]
-        // public ElderlyInfo Elderly { get; set; }
+        public ElderlyInfo Elderly { get; set; }
     }
 }
