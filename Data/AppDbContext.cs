@@ -12,5 +12,7 @@ namespace ElderlyCareSystem.Data
         public DbSet<HealthAssessmentReport> HealthAssessmentReport { get; set; }
         public DbSet<HealthMonitoring> HealthMonitoring { get; set; }
         public DbSet<FamilyInfo> FamilyInfo { get; set; }
+
+
     }
 }

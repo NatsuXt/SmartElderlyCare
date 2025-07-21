@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Oracle.EntityFrameworkCore;
+using ElderlyCareSystem.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // 添加 AppDbContext 注册（在这里添加）
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseOracle(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped<ICheckInService, CheckInService>();
 
 // Add services to the container.
 builder.Services.AddControllers();
