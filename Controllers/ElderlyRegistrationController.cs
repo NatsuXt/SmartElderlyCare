@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using ElderlyCareSystem.Dtos;
-using ElderlyCareSystem.Services;
+using ElderlyFullRegistrationDto.Dtos;
+using ElderlyFullRegistrationDto.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ElderlyCareSystem.Controllers
+namespace ElderlyFullRegistrationDto.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -18,7 +18,7 @@ namespace ElderlyCareSystem.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterElderly([FromBody] ElderlyFullRegistrationDto dto)
+        public async Task<IActionResult> RegisterElderly([FromBody] Dtos.ElderlyFullRegistrationDto dto)
         {
             if (dto == null || dto.Elderly == null || dto.Assessment == null || dto.Monitoring == null)
             {

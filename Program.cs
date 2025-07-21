@@ -1,5 +1,6 @@
 using ElderlyCareSystem.Data;
 using ElderlyCareSystem.Services;
+using ElderlyFullRegistrationDto.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // 2. 注入 CheckInService
 builder.Services.AddScoped<CheckInService>();
+builder.Services.AddScoped<ElderlyRecordService>();
 
 // 3. 添加控制器服务
 builder.Services.AddControllers();

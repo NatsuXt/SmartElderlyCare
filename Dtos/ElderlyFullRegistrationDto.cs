@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ElderlyCareSystem.Dtos
+namespace ElderlyFullRegistrationDto.Dtos
 {
     public class ElderlyDto
     {

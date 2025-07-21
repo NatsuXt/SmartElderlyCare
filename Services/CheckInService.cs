@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ElderlyCareSystem.Data;
-using ElderlyCareSystem.Dtos;
+using ElderlyFullRegistrationDto.Dtos;
 using ElderlyCareSystem.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace ElderlyCareSystem.Services
+namespace ElderlyFullRegistrationDto.Services
 {
     public class CheckInService
     {
