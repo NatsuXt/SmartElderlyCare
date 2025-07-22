@@ -21,6 +21,7 @@ namespace ElderlyCareSystem.Data
         public DbSet<ActivityParticipation> ActivityParticipations { get; set; }
         public DbSet<DietRecommendation> DietRecommendations { get; set; }
         public DbSet<EmergencySOS> EmergencySOSs { get; set; }
+        public DbSet<OperationLog> OperationLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
