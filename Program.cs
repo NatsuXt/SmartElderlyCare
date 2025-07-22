@@ -1,6 +1,5 @@
 using ElderlyCareSystem.Data;
 using ElderlyCareSystem.Services;
-using ElderlyFullRegistrationDto.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using ElderlyCareSystem.Dtos;
-using ElderlyFullRegistrationDto.Services;
+using ElderlyCareSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ElderlyFullRegistrationDto.Controllers
@@ -10,9 +10,9 @@ namespace ElderlyFullRegistrationDto.Controllers
     [Route("api/[controller]")]
     public class CheckInController : ControllerBase
     {
-        private readonly Services.ElderlyFullRegistrationService _checkInService;
+        private readonly ElderlyCareSystem.Services.ElderlyFullRegistrationService _checkInService;
 
-        public CheckInController(Services.ElderlyFullRegistrationService checkInService)
+        public CheckInController(ElderlyCareSystem.Services.ElderlyFullRegistrationService checkInService)
         {
             _checkInService = checkInService;
         }

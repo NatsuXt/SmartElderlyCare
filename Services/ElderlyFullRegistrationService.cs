@@ -6,7 +6,7 @@ using ElderlyCareSystem.Dtos;
 using ElderlyCareSystem.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace ElderlyFullRegistrationDto.Services
+namespace ElderlyCareSystem.Services
 {
     public class ElderlyFullRegistrationService
     {
