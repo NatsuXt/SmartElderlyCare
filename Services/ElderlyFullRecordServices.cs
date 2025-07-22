@@ -26,7 +26,7 @@ namespace ElderlyCareSystem.Services
             if (elderlyEntity == null)
                 return null;
 
-            var elderlyDto = new ElderlyDto
+            var elderlyDto = new ElderlyInfoDto
             {
                 ElderlyId = elderlyEntity.ElderlyId,
                 Name = elderlyEntity.Name,
@@ -42,7 +42,7 @@ namespace ElderlyCareSystem.Services
             var familyInfos = await _context.FamilyInfos
                 .Where(f => f.ElderlyId == elderlyId)
                 .AsNoTracking()
-                .Select(f => new FamilyDto
+                .Select(f => new FamilyInfoDto
                 {
                     Name = f.Name,
                     Relationship = f.Relationship,
@@ -68,7 +68,7 @@ namespace ElderlyCareSystem.Services
             var healthAssessments = await _context.HealthAssessmentReports
                 .Where(a => a.ElderlyId == elderlyId)
                 .AsNoTracking()
-                .Select(a => new HealthAssessmentDto
+                .Select(a => new HealthAssessmentReportDto
                 {
                     PhysicalHealthFunction = a.PhysicalHealthFunction,
                     PsychologicalFunction = a.PsychologicalFunction,

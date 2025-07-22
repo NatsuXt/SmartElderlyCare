@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using ElderlyCareSystem.Dtos;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ElderlyCareSystem.Models
@@ -34,5 +35,7 @@ namespace ElderlyCareSystem.Models
         public string IsPrimaryContact { get; set; }  // 'Y' or 'N'
 
         public ElderlyInfo Elderly { get; set; }
+
+        
     }
 }
