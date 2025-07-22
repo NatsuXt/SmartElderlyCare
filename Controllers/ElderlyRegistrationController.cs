@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using ElderlyFullRegistrationDto.Dtos;
+using ElderlyCareSystem.Dtos;
 using ElderlyFullRegistrationDto.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,15 +10,15 @@ namespace ElderlyFullRegistrationDto.Controllers
     [Route("api/[controller]")]
     public class CheckInController : ControllerBase
     {
-        private readonly CheckInService _checkInService;
+        private readonly Services.ElderlyFullRegistrationService _checkInService;
 
-        public CheckInController(CheckInService checkInService)
+        public CheckInController(Services.ElderlyFullRegistrationService checkInService)
         {
             _checkInService = checkInService;
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterElderly([FromBody] Dtos.ElderlyFullRegistrationDto dto)
+        public async Task<IActionResult> RegisterElderly([FromBody] ElderlyFullRegistrationDtos dto)
         {
             if (dto == null || dto.Elderly == null || dto.Assessment == null || dto.Monitoring == null)
             {

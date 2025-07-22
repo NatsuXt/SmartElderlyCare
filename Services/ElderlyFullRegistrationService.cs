@@ -2,17 +2,17 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ElderlyCareSystem.Data;
-using ElderlyFullRegistrationDto.Dtos;
+using ElderlyCareSystem.Dtos;
 using ElderlyCareSystem.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElderlyFullRegistrationDto.Services
 {
-    public class CheckInService
+    public class ElderlyFullRegistrationService
     {
         private readonly AppDbContext _context;
 
-        public CheckInService(AppDbContext context)
+        public ElderlyFullRegistrationService(AppDbContext context)
         {
             _context = context;
         }

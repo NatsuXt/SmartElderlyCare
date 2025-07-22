@@ -10,8 +10,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseOracle(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // 2. 注入 CheckInService
-builder.Services.AddScoped<CheckInService>();
+builder.Services.AddScoped<ElderlyFullRegistrationService>();
 builder.Services.AddScoped<ElderlyRecordService>();
+builder.Services.AddScoped<FamilyAuthService>();
 
 // 3. 添加控制器服务
 builder.Services.AddControllers();

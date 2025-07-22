@@ -3,7 +3,7 @@ using ElderlyCareSystem.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using ElderlyCareSystem.Data;
-using ElderlyFullRecordDto.Dtos;
+using ElderlyCareSystem.Dtos;
 
 namespace ElderlyCareSystem.Services
 {

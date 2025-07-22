@@ -1,0 +1,344 @@
+namespace ElderlyCareSystem.Models
+{
+    [Table("ACTIVITYPARTICIPATION")]
+    public class ActivityParticipation
+    {
+        [Key]
+        [Column("PARTICIPATION_ID")]
+        public int ParticipationId { get; set; }
+
+        [Column("ACTIVITY_ID")]
+        public int ActivityId { get; set; }
+
+        [ForeignKey(nameof(Elderly))]
+        [Column("ELDERLY_ID")]
+        public int ElderlyId { get; set; }
+
+        [Column("STATUS"), MaxLength(20)]
+        public string Status { get; set; }
+
+        [Column("REGISTRATION_TIME")]
+        public DateTime? RegistrationTime { get; set; }
+
+        [Column("CHECK_IN_TIME")]
+        public DateTime? CheckInTime { get; set; }
+
+        [Column("FEEDBACK")]
+        public string Feedback { get; set; }
+
+        public ElderlyInfo Elderly { get; set; }
+    }
+}
+namespace ElderlyCareSystem.Models
+{
+    [Table("DIETRECOMMENDATION")]
+    public class DietRecommendation
+    {
+        [Key]
+        [Column("RECOMMENDATION_ID")]
+        public int RecommendationId { get; set; }
+
+        [ForeignKey(nameof(Elderly))]
+        [Column("ELDERLY_ID")]
+        public int ElderlyId { get; set; }
+
+        [Column("RECOMMENDATION_DATE")]
+        public DateTime RecommendationDate { get; set; }
+
+        [Column("RECOMMENDED_FOOD")]
+        public string RecommendedFood { get; set; }
+
+        [Column("EXECUTION_STATUS"), MaxLength(20)]
+        public string ExecutionStatus { get; set; }
+
+        public ElderlyInfo Elderly { get; set; }
+    }
+}
+namespace ElderlyCareSystem.Models
+{
+    [Table("EMERGENCYSOS")]
+    public class EmergencySOS
+    {
+        [Key]
+        [Column("CALL_ID")]
+        public int CallId { get; set; }
+
+        [ForeignKey(nameof(Elderly))]
+        [Column("ELDERLY_ID")]
+        public int ElderlyId { get; set; }
+
+        [Column("CALL_TIME")]
+        public DateTime CallTime { get; set; }
+
+        [Column("CALL_TYPE"), MaxLength(50)]
+        public string CallType { get; set; }
+
+        [Column("ROOM_ID")]
+        public int RoomId { get; set; }
+
+        [Column("RESPONSE_TIME")]
+        public DateTime? ResponseTime { get; set; }
+
+        [Column("RESPONSE_STAFF")]
+        public int? ResponseStaff { get; set; }
+
+        [Column("FOLLOW_UP_REQUIRED"), MaxLength(1)]
+        public string FollowUpRequired { get; set; }  // 'Y' or 'N'
+
+        [Column("CALL_STATUS"), MaxLength(20)]
+        public string CallStatus { get; set; }
+
+        [Column("HANDLING_RESULT")]
+        public string HandlingResult { get; set; }
+
+        public ElderlyInfo Elderly { get; set; }
+    }
+}
+namespace ElderlyCareSystem.Models
+{
+    [Table("FAMILYINFO")]
+    public class FamilyInfo
+    {
+        [Key]
+        [Column("FAMILY_ID")]
+        public int FamilyId { get; set; }
+
+        [ForeignKey(nameof(Elderly))]
+        [Column("ELDERLY_ID")]
+        public int ElderlyId { get; set; }
+
+        [Required]
+        [Column("NAME"), MaxLength(100)]
+        public string Name { get; set; }
+
+        [Column("RELATIONSHIP"), MaxLength(50)]
+        public string Relationship { get; set; }
+
+        [Column("CONTACT_PHONE"), MaxLength(20)]
+        public string ContactPhone { get; set; }
+
+        [Column("CONTACT_EMAIL"), MaxLength(50)]
+        public string ContactEmail { get; set; }
+
+        [Column("ADDRESS"), MaxLength(200)]
+        public string Address { get; set; }
+
+        [Column("IS_PRIMARY_CONTACT"), MaxLength(1)]
+        public string IsPrimaryContact { get; set; }  // 'Y' or 'N'
+
+        public ElderlyInfo Elderly { get; set; }
+    }
+}
+namespace ElderlyCareSystem.Models
+{
+    [Table("FEESETTLEMENT")]
+    public class FeeSettlement
+    {
+        [Key]
+        [Column("SETTLEMENT_ID")]
+        public int SettlementId { get; set; }
+
+        [ForeignKey(nameof(Elderly))]
+        [Column("ELDERLY_ID")]
+        public int ElderlyId { get; set; }
+
+        [Column("TOTAL_AMOUNT", TypeName = "decimal(10,2)")]
+        public decimal TotalAmount { get; set; }
+
+        [Column("INSURANCE_AMOUNT", TypeName = "decimal(10,2)")]
+        public decimal InsuranceAmount { get; set; }
+
+        [Column("PERSONAL_PAYMENT", TypeName = "decimal(10,2)")]
+        public decimal PersonalPayment { get; set; }
+
+        [Column("SETTLEMENT_DATE")]
+        public DateTime SettlementDate { get; set; }
+
+        [Column("PAYMENT_STATUS"), MaxLength(20)]
+        public string PaymentStatus { get; set; }
+
+        [Column("PAYMENT_METHOD"), MaxLength(50)]
+        public string PaymentMethod { get; set; }
+
+        [Column("STAFF_ID")]
+        public int StaffId { get; set; }
+
+        public ElderlyInfo Elderly { get; set; }
+    }
+}
+namespace ElderlyCareSystem.Models
+{
+    [Table("HEALTHASSESSMENTREPORT")]
+    public class HealthAssessmentReport
+    {
+        [Key]
+        [Column("ASSESSMENT_ID")]
+        public int AssessmentId { get; set; }
+
+        [ForeignKey(nameof(Elderly))]
+        [Column("ELDERLY_ID")]
+        public int ElderlyId { get; set; }
+
+        [Column("ASSESSMENT_DATE")]
+        public DateTime AssessmentDate { get; set; }
+
+        [Column("PHYSICAL_HEALTH_FUNCTION")]
+        public int PhysicalHealthFunction { get; set; }
+
+        [Column("PSYCHOLOGICAL_FUNCTION")]
+        public int PsychologicalFunction { get; set; }
+
+        [Column("COGNITIVE_FUNCTION")]
+        public int CognitiveFunction { get; set; }
+
+        [Column("HEALTH_GRADE"), MaxLength(50)]
+        public string HealthGrade { get; set; }
+
+        public ElderlyInfo Elderly { get; set; }
+    }
+}
+namespace ElderlyCareSystem.Models
+{
+    [Table("HEALTHMONITORING")]
+    public class HealthMonitoring
+    {
+        [Key]
+        [Column("MONITORING_ID")]
+        public int MonitoringId { get; set; }
+
+        [ForeignKey(nameof(Elderly))]
+        [Column("ELDERLY_ID")]
+        public int ElderlyId { get; set; }
+
+        [Column("MONITORING_DATE")]
+        public DateTime MonitoringDate { get; set; }
+
+        [Column("HEART_RATE")]
+        public int? HeartRate { get; set; }
+
+        [Column("BLOOD_PRESSURE"), MaxLength(20)]
+        public string BloodPressure { get; set; }
+
+        [Column("OXYGEN_LEVEL")]
+        public float? OxygenLevel { get; set; }
+
+        [Column("TEMPERATURE")]
+        public float? Temperature { get; set; }
+
+        [Column("STATUS"), MaxLength(20)]
+        public string Status { get; set; }
+
+        public ElderlyInfo Elderly { get; set; }
+    }
+}
+namespace ElderlyCareSystem.Models
+{
+    [Table("MEDICALORDERS")]
+    public class MedicalOrder
+    {
+        [Key]
+        [Column("ORDER_ID")]
+        public int OrderId { get; set; }
+
+        [ForeignKey(nameof(Elderly))]
+        [Column("ELDERLY_ID")]
+        public int ElderlyId { get; set; }
+
+        [Column("ORDER_DATE")]
+        public DateTime OrderDate { get; set; }
+
+        [Column("STAFF_ID")]
+        public int StaffId { get; set; }
+
+        [Column("MEDICINE_ID")]
+        public int MedicineId { get; set; }
+
+        [Column("DOSAGE"), MaxLength(20)]
+        public string Dosage { get; set; }
+
+        [Column("FREQUENCY"), MaxLength(50)]
+        public string Frequency { get; set; }
+
+        [Column("DURATION"), MaxLength(50)]
+        public string Duration { get; set; }
+
+        public ElderlyInfo Elderly { get; set; }
+    }
+}
+namespace ElderlyCareSystem.Models
+{
+    [Table("NURSINGPLAN")]
+    public class NursingPlan
+    {
+        [Key]
+        [Column("PLAN_ID")]
+        public int PlanId { get; set; }
+
+        [ForeignKey(nameof(Elderly))]
+        [Column("ELDERLY_ID")]
+        public int ElderlyId { get; set; }
+
+        [Column("STAFF_ID")]
+        public int StaffId { get; set; }
+
+        [Column("PLAN_START_DATE")]
+        public DateTime PlanStartDate { get; set; }
+
+        [Column("PLAN_END_DATE")]
+        public DateTime PlanEndDate { get; set; }
+
+        [Column("CARE_TYPE"), MaxLength(50)]
+        public string CareType { get; set; }
+
+        [Column("PRIORITY"), MaxLength(50)]
+        public string Priority { get; set; }
+
+        [Column("EVALUATION_STATUS"), MaxLength(50)]
+        public string EvaluationStatus { get; set; }
+
+        public ElderlyInfo Elderly { get; set; }
+    }
+}
+
+namespace ElderlyCareSystem.Models
+{
+    [Table("ELDERLYINFO")]
+    public class ElderlyInfo
+    {
+        [Key]
+        [Column("ELDERLY_ID")]
+        public int ElderlyId { get; set; }
+
+        [Required]
+        [Column("NAME"), MaxLength(100)]
+        public string Name { get; set; }
+
+        [Column("GENDER"), MaxLength(10)]
+        public string Gender { get; set; }
+
+        [Column("BIRTH_DATE")]
+        public DateTime? BirthDate { get; set; }
+
+        [Column("ID_CARD_NUMBER"), MaxLength(18)]
+        public string IdCardNumber { get; set; }
+
+        [Column("CONTACT_PHONE"), MaxLength(20)]
+        public string ContactPhone { get; set; }
+
+        [Column("ADDRESS"), MaxLength(200)]
+        public string Address { get; set; }
+
+        [Column("EMERGENCY_CONTACT"), MaxLength(200)]
+        public string EmergencyContact { get; set; }
+
+        public List<FamilyInfo> Families { get; set; }
+        public List<HealthMonitoring> HealthMonitorings { get; set; }
+        public List<HealthAssessmentReport> HealthAssessmentReports { get; set; }
+        public List<MedicalOrder> MedicalOrders { get; set; }
+        public List<NursingPlan> NursingPlans { get; set; }
+        public List<FeeSettlement> FeeSettlements { get; set; }
+        public List<ActivityParticipation> ActivityParticipations { get; set; }
+        public List<DietRecommendation> DietRecommendations { get; set; }
+        public List<EmergencySOS> EmergencySOSCalls { get; set; }
+    }
+}

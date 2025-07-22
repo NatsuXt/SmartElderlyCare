@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ElderlyFullRegistrationDto.Dtos
+namespace ElderlyCareSystem.Dtos
 {
     public class ElderlyDto
     {
+        public int ElderlyId { get; set; }
         public string Name { get; set; }
         public string Gender { get; set; }
         public DateTime? BirthDate { get; set; }
@@ -44,7 +45,7 @@ namespace ElderlyFullRegistrationDto.Dtos
     }
 
 
-    public class ElderlyFullRegistrationDto
+    public class ElderlyFullRegistrationDtos
     {
         public ElderlyDto Elderly { get; set; }
         public HealthAssessmentDto Assessment { get; set; }
