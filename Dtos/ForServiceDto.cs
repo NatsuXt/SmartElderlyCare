@@ -41,5 +41,16 @@ namespace ElderlyCareSystem.Dtos
         public List<FeeSettlementDto> FeeSettlements { get; set; }
         public List<ActivityParticipationDto> ActivityParticipations { get; set; }
     }
-
+    public class DietRecommendationResponseDto
+    {
+        public int RecommendationId { get; set; }
+        public DateTime RecommendationDate { get; set; }
+        public string RecommendedFood { get; set; }
+        public string ExecutionStatus { get; set; }
+    }
+    public class DietExecutionUpdateDto
+    {
+        public int RecommendationId { get; set; }
+        public string ExecutionStatus { get; set; }
+    }
 }

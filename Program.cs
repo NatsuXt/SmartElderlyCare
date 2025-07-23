@@ -13,6 +13,9 @@ builder.Services.AddScoped<ElderlyFullRegistrationService>();
 builder.Services.AddScoped<ElderlyRecordService>();
 builder.Services.AddScoped<FamilyAuthService>();
 builder.Services.AddScoped<FamilyQueryService>();
+builder.Services.AddScoped<DietRecommendationService>();
+builder.Services.AddHttpClient();
+
 
 // 3. 添加控制器服务
 builder.Services.AddControllers();
