@@ -29,7 +29,7 @@ namespace ElderlyFullRegistrationDto.Controllers
                 dto.Elderly,
                 dto.Assessment,
                 dto.Monitoring,
-                dto.Families ?? new List<FamilyInfoDto>()
+                dto.Families ?? new List<FamilyInfoCreateDto>()
             );
 
             return Ok(new { ElderlyId = elderlyId, Message = "老人入住登记成功" });

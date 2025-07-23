@@ -18,10 +18,10 @@ namespace ElderlyCareSystem.Dtos
     //对应功能●	1.1.1 老人入住登记与健康评估
     public class ElderlyFullRegistrationDtos
     {
-        public ElderlyInfoDto Elderly { get; set; }
-        public HealthAssessmentReportDto Assessment { get; set; }
-        public HealthMonitoringDto Monitoring { get; set; }
-        public List<FamilyInfoDto> Families { get; set; }
+        public ElderlyInfoCreateDto Elderly { get; set; }
+        public HealthAssessmentReportCreateDto Assessment { get; set; }
+        public HealthMonitoringCreateDto Monitoring { get; set; }
+        public List<FamilyInfoCreateDto> Families { get; set; }
 
     }
     //对应功能●	1.1.15 移动端家属信息查询中的第一项

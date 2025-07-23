@@ -21,10 +21,10 @@ namespace ElderlyCareSystem.Services
         /// 老人入住登记与初次健康评估（包括家属信息）
         /// </summary>
         public async Task<int> RegisterElderlyAsync(
-            ElderlyInfoDto elderlyDto,
-            HealthAssessmentReportDto assessmentDto,
-            HealthMonitoringDto monitoringDto,
-            List<FamilyInfoDto> familyDtos)
+            ElderlyInfoCreateDto elderlyDto,
+            HealthAssessmentReportCreateDto assessmentDto,
+            HealthMonitoringCreateDto monitoringDto,
+            List<FamilyInfoCreateDto> familyDtos)
         {
             // 1. 添加老人基本信息（默认入住状态可在这里设置，如有字段）
             var elderly = new ElderlyInfo

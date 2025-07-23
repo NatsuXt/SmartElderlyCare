@@ -1,5 +1,45 @@
 ﻿using System;
+namespace ElderlyCareSystem.Dtos
+{
+    public class ElderlyInfoCreateDto
+    {
+        public string Name { get; set; }
+        public string Gender { get; set; }
+        public DateTime? BirthDate { get; set; }
+        public string IdCardNumber { get; set; }
+        public string ContactPhone { get; set; }
+        public string Address { get; set; }
+        public string EmergencyContact { get; set; }
+    }
 
+    public class FamilyInfoCreateDto
+    {
+        public string Name { get; set; }
+        public string Relationship { get; set; }
+        public string ContactPhone { get; set; }
+        public string ContactEmail { get; set; }
+        public string Address { get; set; }
+        public string IsPrimaryContact { get; set; }
+    }
+
+    public class HealthMonitoringCreateDto
+    {
+        public DateTime MonitoringDate { get; set; }
+        public int HeartRate { get; set; }
+        public string BloodPressure { get; set; }
+        public float OxygenLevel { get; set; }
+        public float Temperature { get; set; }
+        public string Status { get; set; }
+    }
+    public class HealthAssessmentReportCreateDto
+    {
+        public DateTime AssessmentDate { get; set; }
+        public int PhysicalHealthFunction { get; set; }
+        public int PsychologicalFunction { get; set; }
+        public int CognitiveFunction { get; set; }
+        public string HealthGrade { get; set; }
+    }
+}
 namespace ElderlyCareSystem.Dtos
 {
     public class ElderlyInfoDto

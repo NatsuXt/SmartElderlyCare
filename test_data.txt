@@ -90,13 +90,12 @@
         "isPrimaryContact": "Y"
       }
     ]
-  },
+  }
 
 
 
   {
     "elderly": {
-      "elderlyId": 3,
       "name": "李伟",
       "gender": "男",
       "birthDate": "1948-03-15T00:00:00Z",
@@ -106,7 +105,6 @@
       "emergencyContact": "李娜 13700137001"
     },
     "assessment": {
-      "assessmentId": 103,
       "elderlyId": 3,
       "assessmentDate": "2025-07-22T08:45:00Z",
       "physicalHealthFunction": 6,
@@ -115,7 +113,6 @@
       "healthGrade": "一般"
     },
     "monitoring": {
-      "monitoringId": 203,
       "elderlyId": 3,
       "monitoringDate": "2025-07-22T08:45:00Z",
       "heartRate": 78,
@@ -126,7 +123,6 @@
     },
     "families": [
       {
-        "familyId": 303,
         "elderlyId": 3,
         "name": "李娜",
         "relationship": "女儿",
@@ -136,13 +132,12 @@
         "isPrimaryContact": "Y"
       }
     ]
-  },
+  }
 
 
 
   {
     "elderly": {
-      "elderlyId": 4,
       "name": "赵敏",
       "gender": "女",
       "birthDate": "1955-09-25T00:00:00Z",
@@ -152,8 +147,6 @@
       "emergencyContact": "赵强 13600136001"
     },
     "assessment": {
-      "assessmentId": 104,
-      "elderlyId": 4,
       "assessmentDate": "2025-07-22T11:15:00Z",
       "physicalHealthFunction": 9,
       "psychologicalFunction": 8,
@@ -161,8 +154,6 @@
       "healthGrade": "优秀"
     },
     "monitoring": {
-      "monitoringId": 204,
-      "elderlyId": 4,
       "monitoringDate": "2025-07-22T11:15:00Z",
       "heartRate": 70,
       "bloodPressure": "115/75",
@@ -172,8 +163,6 @@
     },
     "families": [
       {
-        "familyId": 304,
-        "elderlyId": 4,
         "name": "赵强",
         "relationship": "丈夫",
         "contactPhone": "13600136001",
@@ -182,12 +171,11 @@
         "isPrimaryContact": "Y"
       }
     ]
-  },
+  }
 
 
   {
     "elderly": {
-      "elderlyId": 5,
       "name": "孙丽",
       "gender": "女",
       "birthDate": "1947-12-05T00:00:00Z",
@@ -197,8 +185,6 @@
       "emergencyContact": "孙强 13500135001"
     },
     "assessment": {
-      "assessmentId": 105,
-      "elderlyId": 5,
       "assessmentDate": "2025-07-23T09:30:00Z",
       "physicalHealthFunction": 7,
       "psychologicalFunction": 7,
@@ -206,8 +192,7 @@
       "healthGrade": "良好"
     },
     "monitoring": {
-      "monitoringId": 205,
-      "elderlyId": 5,
+      
       "monitoringDate": "2025-07-23T09:30:00Z",
       "heartRate": 74,
       "bloodPressure": "119/79",
@@ -217,8 +202,7 @@
     },
     "families": [
       {
-        "familyId": 305,
-        "elderlyId": 5,
+        
         "name": "孙强",
         "relationship": "儿子",
         "contactPhone": "13500135001",
