@@ -32,25 +32,7 @@ namespace ElderlyCareSystem.Dtos
         public string ElderlyName { get; set; }
         public string ElderlyIdCardNumber { get; set; }
     }
-    //对应功能●	1.1.15 移动端家属信息查询中的第二项
-
-    public class FamilyQueryResponseDto
-    {
-        public ElderlyInfoDto ElderlyInfo { get; set; }
-        public List<HealthMonitoringDto> HealthMonitorings { get; set; }
-        public List<FeeSettlementDto> FeeSettlements { get; set; }
-        public List<ActivityParticipationDto> ActivityParticipations { get; set; }
-    }
-    public class DietRecommendationResponseDto
-    {
-        public int RecommendationId { get; set; }
-        public DateTime RecommendationDate { get; set; }
-        public string RecommendedFood { get; set; }
-        public string ExecutionStatus { get; set; }
-    }
-    public class DietExecutionUpdateDto
-    {
-        public int RecommendationId { get; set; }
-        public string ExecutionStatus { get; set; }
-    }
+    
+    
+  
 }

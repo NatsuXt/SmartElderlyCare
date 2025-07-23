@@ -1,8 +1,6 @@
-﻿using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
+﻿using System.Text;
 using ElderlyCareSystem.Data;
+using ElderlyCareSystem.Dtos;
 using ElderlyCareSystem.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,14 +9,12 @@ namespace ElderlyCareSystem.Services
     public class DietRecommendationService
     {
         private readonly AppDbContext _context;
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly string accessToken = "bce-v3/ALTAK-3DxPuNUfiBjvfFhPtK1yt/598449108e33d66de3d77b7c34b8b6791fca3544"; // 替换为你的真实 Token
-        private readonly string qianfanApiUrl = "https://qianfan.baidubce.com/v2/chat/completions";
+        private readonly QianfanService _qianfanService;
 
-        public DietRecommendationService(AppDbContext context, IHttpClientFactory httpClientFactory)
+        public DietRecommendationService(AppDbContext context, QianfanService qianfanService)
         {
             _context = context;
-            _httpClientFactory = httpClientFactory;
+            _qianfanService = qianfanService;
         }
 
         public async Task<string> GenerateDietAdviceAsync(int elderlyId)
@@ -37,7 +33,7 @@ namespace ElderlyCareSystem.Services
                 return "缺少健康数据，无法生成建议";
 
             string prompt = $"""
-你是一名营养专家，请根据以下健康指标生成适合老人的个性化饮食建议：
+你是一名营养专家，请根据以下健康指标简要推荐适合老人的10种食物（只列出食物名称，用顿号分隔）：
 - 心率: {monitoring.HeartRate} 次/分
 - 血压: {monitoring.BloodPressure}
 - 血氧: {monitoring.OxygenLevel}%
@@ -46,39 +42,11 @@ namespace ElderlyCareSystem.Services
 - 心理功能评分: {report.PsychologicalFunction}
 - 认知功能评分: {report.CognitiveFunction}
 - 健康等级: {report.HealthGrade}
-简要推荐适合该老人的食物（仅列出食物名称，用顿号分隔，最多列10个）
 """;
-
-            var httpClient = _httpClientFactory.CreateClient();
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-            var requestBody = new
-            {
-                messages = new[]
-                {
-                    new { role = "user", content = prompt }
-                },
-                model = "ernie-4.0-turbo-8k",
-                temperature = 0.8
-            };
-
-            var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-            var response = await httpClient.PostAsync(qianfanApiUrl, content);
-
-            if (!response.IsSuccessStatusCode)
-                return $"生成失败: {response.StatusCode} - {response.ReasonPhrase}";
-
-            var responseContent = await response.Content.ReadAsStringAsync();
 
             try
             {
-                using var doc = JsonDocument.Parse(responseContent);
-                string result = doc.RootElement
-                    .GetProperty("choices")[0]
-                    .GetProperty("message")
-                    .GetProperty("content")
-                    .GetString();
+                string result = await _qianfanService.GetChatCompletionAsync(prompt);
 
                 var recommendation = new DietRecommendation
                 {
@@ -95,7 +63,7 @@ namespace ElderlyCareSystem.Services
             }
             catch (Exception ex)
             {
-                return $"解析失败: {ex.Message}\n原始返回: {responseContent}";
+                return $"生成失败: {ex.Message}";
             }
         }
 
@@ -109,11 +77,19 @@ namespace ElderlyCareSystem.Services
             return true;
         }
 
-        public async Task<List<DietRecommendation>> GetRecommendationsByElderlyAsync(int elderlyId)
+        public async Task<List<DietRecommendationDto>> GetRecommendationsByElderlyAsync(int elderlyId)
         {
             return await _context.DietRecommendations
                 .Where(r => r.ElderlyId == elderlyId)
                 .OrderByDescending(r => r.RecommendationDate)
+                .Select(r => new DietRecommendationDto
+                {
+                    RecommendationId = r.RecommendationId,
+                    ElderlyId = r.ElderlyId,
+                    RecommendationDate = r.RecommendationDate,
+                    RecommendedFood = r.RecommendedFood,
+                    ExecutionStatus = r.ExecutionStatus
+                })
                 .ToListAsync();
         }
     }

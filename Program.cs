@@ -15,7 +15,8 @@ builder.Services.AddScoped<FamilyAuthService>();
 builder.Services.AddScoped<FamilyQueryService>();
 builder.Services.AddScoped<DietRecommendationService>();
 builder.Services.AddHttpClient();
-
+builder.Services.AddScoped<QianfanService>();
+builder.Services.AddScoped<DietRecommendationService>();
 
 // 3. 添加控制器服务
 builder.Services.AddControllers();
