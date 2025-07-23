@@ -133,6 +133,6 @@ CREATE TABLE OperationLog (
     affected_entity VARCHAR2(100),
     operation_status VARCHAR2(20),
     ip_address VARCHAR2(50),
-    device_type VARCHAR2(50),
+    device_type VARCHAR2(50)
 
 );
