@@ -85,3 +85,25 @@
 
 
 <mark>**接口的具体传参和功能参考swagger**</mark>
+
+## 4.主要文件及作用
+
+1. Controllers	接收请求并返回结果，用于接口调用
+
+   1. DietRecommendationController  对应业务4的菜单功能
+   2. ElderlyFullRecordController   对应业务2的老人档案功能
+   3. ElderlyRegistrationController     对应业务1的登记功能
+   4. FamilyAuthController  对应业务3的家属认证
+   5. FamilyQueryController     对应业务3的家属查询
+
+2. Dtos			接收或返回业务中用的数据结构
+    1. BasicDto 存放基础的表格所直接对应的dto
+    2. ForServiceDto 存放部分服务所需要的dto
+
+3. Services		业务逻辑的实现
+    与Controllers相对应，额外多出一个千帆大模型的服务QianfanService
+
+4. Models		定义数据结构，用于数据库存储
+    一张表对应一个文件
+5. Data/AppDbContext	连接数据库，进行实际操作
+
