@@ -287,10 +287,10 @@
         "contactPhone": "13900004444",
         "contactEmail": "wangqiang@example.com",
         "address": "上海市浦东新区星辰路45号",
-        "isPrimaryContact": "是"
+        "isPrimaryContact": "Y"
       }
     ]
-  },
+  }
   {
     "elderly": {
       "name": "李强",
