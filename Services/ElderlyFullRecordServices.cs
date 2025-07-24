@@ -42,7 +42,7 @@ namespace ElderlyCareSystem.Services
             var familyInfos = await _context.FamilyInfos
                 .Where(f => f.ElderlyId == elderlyId)
                 .AsNoTracking()
-                .Select(f => new FamilyInfoDto
+                .Select(f => new FamilyInfoCreateDto
                 {
                     Name = f.Name,
                     Relationship = f.Relationship,
@@ -55,7 +55,7 @@ namespace ElderlyCareSystem.Services
             var healthMonitorings = await _context.HealthMonitorings
                 .Where(h => h.ElderlyId == elderlyId)
                 .AsNoTracking()
-                .Select(h => new HealthMonitoringDto
+                .Select(h => new HealthMonitoringCreateDto
                 {
                     HeartRate = (int)h.HeartRate,
                     BloodPressure = h.BloodPressure,
@@ -68,7 +68,7 @@ namespace ElderlyCareSystem.Services
             var healthAssessments = await _context.HealthAssessmentReports
                 .Where(a => a.ElderlyId == elderlyId)
                 .AsNoTracking()
-                .Select(a => new HealthAssessmentReportDto
+                .Select(a => new HealthAssessmentReportCreateDto
                 {
                     PhysicalHealthFunction = a.PhysicalHealthFunction,
                     PsychologicalFunction = a.PsychologicalFunction,
