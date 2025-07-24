@@ -14,7 +14,11 @@ namespace ElderlyCareSystem.Controllers
         {
             _authService = authService;
         }
-
+        /// <summary>
+        /// 家属登录认证
+        /// </summary>
+        /// <param name="request">暂定为用家属和老人的信息进行登录</param>
+        /// <returns>返回验证结果</returns>
         // POST: api/mobile/family-auth/validate
         [HttpPost("validate")]
         public async Task<IActionResult> ValidateLogin([FromBody] FamilyLoginRequestDto request)

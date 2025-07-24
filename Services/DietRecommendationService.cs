@@ -92,5 +92,21 @@ namespace ElderlyCareSystem.Services
                 })
                 .ToListAsync();
         }
+        
+        public async Task<DietRecommendationDto?> GetRecommendationByIdAsync(int recommendationId)
+        {
+            return await _context.DietRecommendations
+                .Where(r => r.RecommendationId == recommendationId)
+                .Select(r => new DietRecommendationDto
+                {
+                    RecommendationId = r.RecommendationId,
+                    ElderlyId = r.ElderlyId,
+                    RecommendationDate = r.RecommendationDate,
+                    RecommendedFood = r.RecommendedFood,
+                    ExecutionStatus = r.ExecutionStatus
+                })
+                .FirstOrDefaultAsync();
+        }
+
     }
 }

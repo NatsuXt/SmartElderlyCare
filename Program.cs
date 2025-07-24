@@ -17,6 +17,12 @@ builder.Services.AddScoped<DietRecommendationService>();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<QianfanService>();
 builder.Services.AddScoped<DietRecommendationService>();
+builder.Services.AddSwaggerGen(c =>
+{
+    var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
+    c.IncludeXmlComments(xmlPath); 
+});
 
 // 3. 添加控制器服务
 builder.Services.AddControllers();

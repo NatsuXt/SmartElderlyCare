@@ -16,7 +16,11 @@ namespace ElderlyFullRegistrationDto.Controllers
         {
             _checkInService = checkInService;
         }
-
+        /// <summary>
+        /// 登记老人信息
+        /// </summary>
+        /// <param name="dto">json格式的登记数据</param>
+        /// <returns>返回登记的结果</returns>
         [HttpPost("register")]
         public async Task<IActionResult> RegisterElderly([FromBody] ElderlyFullRegistrationDtos dto)
         {

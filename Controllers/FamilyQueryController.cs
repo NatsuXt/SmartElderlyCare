@@ -18,7 +18,7 @@ namespace ElderlyCareSystem.Controllers
         }
 
         /// <summary>
-        /// （无需登录）根据老人ID和查询类型查询老人相关信息
+        /// 根据老人ID和查询类型查询老人相关信息
         /// </summary>
         /// <param name="elderlyId">老人ID</param>
         /// <param name="queryType">查询类型："ElderlyInfo", "HealthMonitoring", "FeeSettlement", "ActivityParticipation"</param>

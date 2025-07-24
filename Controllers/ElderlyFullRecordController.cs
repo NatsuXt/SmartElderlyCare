@@ -14,7 +14,11 @@ namespace ElderlyCareSystem.Controllers
         {
             _elderlyRecordService = elderlyRecordService;
         }
-
+        /// <summary>
+        /// 得到老人的档案
+        /// </summary>
+        /// <param name="elderlyId">老人的id</param>
+        /// <returns>返回ElderlyInfo 等表格</returns>
         [HttpGet("{elderlyId}")]
         public async Task<IActionResult> GetElderlyRecord(int elderlyId)
         {
