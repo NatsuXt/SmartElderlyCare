@@ -1,6 +1,6 @@
-# 智慧养老系统 - 访客预约与数据分析模块
+# 智慧养老系统 - 操作日志与系统公告模块
 
-一个基于 .NET 8 和 Oracle 数据库的现代化养老院管理系统，提供访客预约管理和多维度数据可视化功能。
+基于 .NET 8 和 Oracle 数据库的现代化养老院管理系统，提供访客预约管理和多维度数据可视化功能。
 
 ## 功能特性
 
@@ -30,41 +30,13 @@
 - **Controllers**：API控制器层
 - **Migrations**：数据库版本管理
 
-## 快速开始
 
-### 环境要求
+## 环境要求
 - .NET 8.0 SDK
 - Oracle Database 12c+
 - Visual Studio 2022 或 VS Code
 
-### 安装步骤
 
-1. **克隆项目**
-```bash
-git clone https://github.com/yourusername/nursing-home-system.git
-cd nursing-home-system/NursingHome/NursingHome
-```
-
-2. **安装依赖**
-```bash
-dotnet restore
-```
-
-3. **配置数据库**
-```bash
-# 修改 appsettings.json 中的连接字符串
-# 创建数据库表（使用提供的SQL脚本）
-```
-
-4. **运行项目**
-```bash
-dotnet run
-```
-
-5. **访问API文档**
-```
-https://localhost:5155/swagger
-```
 
 ## API接口说明
 
