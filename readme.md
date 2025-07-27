@@ -51,4 +51,4 @@
    添加了SosNotification实体来跟踪通知发送情况
    在StaffInfoDTO中添加了CurrentRoomId和Distance属性
 7. 消毒部分按照文档做的
-8.项目构建的时候是StaffInfo文件夹和StaffInfo.sln，在StaffInfo文件夹里面是branch里面的除了StaffInfo.sln的内容，并且bin文件下的Debug下的net8这样，不知道为啥git上合并过去了，obj就没事
+8. 项目构建的时候是StaffInfo文件夹和StaffInfo.sln，在StaffInfo文件夹里面是branch里面的除了StaffInfo.sln的内容，并且bin文件下的Debug下的net8这样，不知道为啥git上合并过去了，obj就没事
