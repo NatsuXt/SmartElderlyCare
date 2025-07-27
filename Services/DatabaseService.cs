@@ -14,7 +14,7 @@ namespace RoomDeviceManagement.Services
         public DatabaseService()
         {
             // Oracle 18c 连接字符串配置
-            _connectionString = "Data Source=47.96.238.102:1521/orcl;User Id=FIBRE;Password=FIBRE2025;";
+            _connectionString = "Data Source=（我们服务器的主机名）:（端口号）/orcl;User Id=FIBRE;Password=（如需要，可以找作者要）;";
         }
 
         public DatabaseService(string connectionString)

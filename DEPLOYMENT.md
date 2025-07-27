@@ -4,17 +4,19 @@
 
 ### 服务器信息
 
-- **主机地址**: 47.96.238.102
-- **端口**: 1521
+- **主机地址**: 
+- **端口**: 
 - **服务名**: orcl
 - **用户名**: FIBRE
-- **密码**: FIBRE2025
+- **密码**: 
 - **角色**: default
 
-### 连接字符串
+### 连接字符串（在 Services/DatabaseService.cs中）
 
 ```csharp
-"Data Source=47.96.238.102:1521/orcl;User Id=FIBRE;Password=FIBRE2025;"
+_connectionString = "Data Source=（我们服务器的主机名）/orcl;User Id=FIBRE;Password=（如需要，可以找作者要）;";
+
+
 ```
 
 ## 部署步骤
@@ -37,9 +39,9 @@
    
    - 连接名称: 智慧养老系统
    - 用户名: FIBRE
-   - 密码: FIBRE2025
-   - 主机名: 47.96.238.102
-   - 端口: 1521
+   - 密码: （如上方连接字符串中的密码）
+   - 主机名: （我们的服务器号）
+   - 端口: （端口号）
    - 服务名: orcl
 
 3. 测试连接成功后，执行以下脚本：
@@ -52,7 +54,7 @@
 #### 方式二：使用SQLPlus
 
 ```bash
-sqlplus FIBRE/FIBRE2025@47.96.238.102:1521/orcl
+sqlplus （用户名）/（密码）@（主机名，自行替换）:（端口号，自行替换）/orcl
 @SQL/CreateTables.sql
 @SQL/TestData.sql
 ```
@@ -106,7 +108,7 @@ dotnet run
 public DatabaseService()
 {
     // Oracle 18c 连接字符串配置
-    _connectionString = "Data Source=47.96.238.102:1521/orcl;User Id=FIBRE;Password=FIBRE2025;";
+    _connectionString = "Data Source=（我们服务器的主机名）/orcl;User Id=FIBRE;Password=（如需要，可以找作者要）;";
 }
 ```
 
@@ -133,7 +135,7 @@ public DatabaseService()
 **解决方案**:
 
 - 确认用户名为 `FIBRE`
-- 确认密码为 `FIBRE2025`
+- 确认密码
 - 检查用户是否存在且有相应权限
 
 #### 3. 表不存在错误
@@ -154,7 +156,7 @@ public DatabaseService()
 
 - 检查防火墙设置
 - 确认端口1521是否开放
-- 测试网络连通性: `telnet 47.96.238.102 1521`
+- 测试网络连通性
 
 ### 日志查看
 
