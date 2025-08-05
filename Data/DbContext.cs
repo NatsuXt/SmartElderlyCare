@@ -27,3 +27,12 @@ public DbSet<ElectronicFence> ElectronicFences { get; set; }
 
 // 围栏出入记录表 (FenceLog)
 public DbSet<FenceLog> FenceLogs { get; set; }
+
+// 医嘱管理表 (MedicalOrder)
+public DbSet<MedicalOrder> MedicalOrders { get; set; }
+
+// 活动安排表 (ActivitySchedule)
+public DbSet<ActivitySchedule> ActivitySchedules { get; set; }
+
+// 活动参与表 (ActivityParticipation)
+public DbSet<ActivityParticipation> ActivityParticipations { get; set; }
