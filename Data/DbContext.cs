@@ -75,3 +75,10 @@ public DbSet<MedicineProcurement> MedicineProcurements { get; set; }
 
 // 语音助手提示表 (VoiceAssistantReminder)
 public DbSet<VoiceAssistantReminder> VoiceAssistantReminders { get; set; }
+
+//SOS（EmergencySOS）
+public DbSet<EmergencySOS> EmergencySos { get; set; }
+
+//消毒表（DisinfectionRecord）
+public DbSet<DisinfectionRecord> DisinfectionRecords { get; set; }
+
