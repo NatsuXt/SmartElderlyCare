@@ -29,8 +29,6 @@ namespace api.Models
         [Column(TypeName = "TEXT")]
         public string? activity_description { get; set; } // 活动描述
 
-        // ------------------- 导航属性 -------------------
-
         [ForeignKey("staff_id")]
         public StaffInfo? Staff { get; set; } // 导航属性：关联员工
     }
