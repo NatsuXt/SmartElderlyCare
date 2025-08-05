@@ -60,3 +60,18 @@ public DbSet<StaffLocation> StaffLocations { get; set; }
 
 //房间表（Room）
 public DbSet<Room> Rooms { get; set; }
+
+// 异常健康预警表 (HealthAlert)
+public DbSet<HealthAlert> HealthAlerts { get; set; }
+
+// 健康数据阈值表 (HealthThreshold)
+public DbSet<HealthThreshold> HealthThresholds { get; set; }
+
+// 药品库存信息表 (MedicineInventory)
+public DbSet<MedicineInventory> MedicineInventories { get; set; }
+
+// 药品采购管理表 (MedicineProcurement)
+public DbSet<MedicineProcurement> MedicineProcurements { get; set; }
+
+// 语音助手提示表 (VoiceAssistantReminder)
+public DbSet<VoiceAssistantReminder> VoiceAssistantReminders { get; set; }
