@@ -1,72 +1,37 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RoomDeviceManagement.Models
 {
-    /// <summary>
-    /// 老人信息实体类
-    /// </summary>
+    [Table("ELDERLYINFO")]
     public class ElderlyInfo
     {
-        /// <summary>
-        /// 老人ID（主键）
-        /// </summary>
         [Key]
+        [Column("ELDERLY_ID")]
         public int ElderlyId { get; set; }
 
-        /// <summary>
-        /// 姓名
-        /// </summary>
         [Required]
-        [StringLength(100)]
-        public string? Name { get; set; }
+        [Column("NAME"), MaxLength(100)]
+        public string Name { get; set; }
 
-        /// <summary>
-        /// 性别
-        /// </summary>
-        [Required]
-        [StringLength(10)]
-        public string? Gender { get; set; }
+        [Column("GENDER"), MaxLength(10)]
+        public string Gender { get; set; }
 
-        /// <summary>
-        /// 出生日期
-        /// </summary>
-        [Required]
-        public DateTime BirthDate { get; set; }
+        [Column("BIRTH_DATE")]
+        public DateTime? BirthDate { get; set; }
 
-        /// <summary>
-        /// 身份证号码
-        /// </summary>
-        [Required]
-        [StringLength(18)]
-        public string? IdCardNumber { get; set; }
+        [Column("ID_CARD_NUMBER"), MaxLength(18)]
+        public string IdCardNumber { get; set; }
 
-        /// <summary>
-        /// 联系电话
-        /// </summary>
-        [StringLength(20)]
-        public string? ContactPhone { get; set; }
+        [Column("CONTACT_PHONE"), MaxLength(20)]
+        public string ContactPhone { get; set; }
 
-        /// <summary>
-        /// 住址
-        /// </summary>
-        [StringLength(200)]
-        public string? Address { get; set; }
+        [Column("ADDRESS"), MaxLength(200)]
+        public string Address { get; set; }
 
-        /// <summary>
-        /// 紧急联系人
-        /// </summary>
-        [StringLength(200)]
-        public string? EmergencyContact { get; set; }
-
-        /// <summary>
-        /// 创建时间
-        /// </summary>
-        public DateTime CreatedTime { get; set; } = DateTime.Now;
-
-        /// <summary>
-        /// 更新时间
-        /// </summary>
-        public DateTime UpdatedTime { get; set; } = DateTime.Now;
+        [Column("EMERGENCY_CONTACT"), MaxLength(200)]
+        public string EmergencyContact { get; set; }
     }
 }
