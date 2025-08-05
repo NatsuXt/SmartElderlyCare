@@ -95,6 +95,47 @@ namespace RoomDeviceManagement.Services
         }
 
         /// <summary>
+        /// 异步查询单个结果
+        /// </summary>
+        public async Task<T> QuerySingleAsync<T>(string sql, object? parameters = null) where T : new()
+        {
+            var result = await QuerySingleOrDefaultAsync<T>(sql, parameters);
+            if (result == null)
+            {
+                throw new InvalidOperationException("Query returned no results");
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// 异步查询单个结果或默认值
+        /// </summary>
+        public async Task<T?> QuerySingleOrDefaultAsync<T>(string sql, object? parameters = null) where T : new()
+        {
+            try
+            {
+                using var connection = GetConnection();
+                await connection.OpenAsync();
+                
+                using var command = new OracleCommand(sql, connection);
+                
+                if (parameters != null)
+                {
+                    AddParameters(command, parameters);
+                }
+
+                using var reader = await command.ExecuteReaderAsync();
+                var results = MapResults<T>(reader);
+                return results.FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"异步查询单个结果失败：{ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
         /// 添加参数到命令
         /// </summary>
         private void AddParameters(OracleCommand command, object parameters)

@@ -13,6 +13,13 @@ builder.Services.AddScoped<DeviceMonitoringService>();
 builder.Services.AddScoped<ElectronicFenceService>();
 builder.Services.AddScoped<HealthMonitoringService>();
 
+// 注册数据管理相关服务
+builder.Services.AddScoped<RoomManagementService>();
+builder.Services.AddScoped<DeviceManagementService>();
+builder.Services.AddScoped<FenceManagementService>();
+builder.Services.AddScoped<FenceLogService>();
+builder.Services.AddScoped<HealthDataService>();
+
 // 添加CORS支持
 builder.Services.AddCors(options =>
 {
@@ -57,27 +64,19 @@ else
 }
 
 Console.WriteLine();
-Console.WriteLine("🚀 智慧养老系统 - 核心业务逻辑 API 服务已启动");
+Console.WriteLine("🚀 智慧养老系统 - 房间与设备管理模块 API 服务已启动");
 Console.WriteLine("📍 API文档地址：http://localhost:5000/swagger");
 Console.WriteLine();
-Console.WriteLine("📌 设备监控 API端点：");
-Console.WriteLine("   GET  /api/DeviceMonitoring/poll-status      - 轮询设备状态");
-Console.WriteLine("   POST /api/DeviceMonitoring/fault-report     - 设备故障上报");
-Console.WriteLine("   GET  /api/DeviceMonitoring/{id}/status      - 获取设备详情");
-Console.WriteLine("   POST /api/DeviceMonitoring/sync             - 同步设备状态");
+Console.WriteLine("📌 IoT监控业务 API：");
+Console.WriteLine("   设备监控：/api/DeviceMonitoring/*");
+Console.WriteLine("   电子围栏：/api/ElectronicFence/*");
+Console.WriteLine("   健康监测：/api/HealthMonitoring/*");
 Console.WriteLine();
-Console.WriteLine("📌 电子围栏 API端点：");
-Console.WriteLine("   POST /api/ElectronicFence/gps-report        - GPS位置上报");
-Console.WriteLine("   GET  /api/ElectronicFence/logs              - 围栏进出记录");
-Console.WriteLine("   GET  /api/ElectronicFence/current-status    - 当前位置状态");
-Console.WriteLine("   GET  /api/ElectronicFence/alerts            - 围栏警报");
-Console.WriteLine();
-Console.WriteLine("📌 健康监测 API端点：");
-Console.WriteLine("   POST /api/HealthMonitoring/data-report      - 健康数据上报");
-Console.WriteLine("   GET  /api/HealthMonitoring/elderly/{id}/history - 健康历史数据");
-Console.WriteLine("   GET  /api/HealthMonitoring/statistics        - 健康统计");
-Console.WriteLine("   GET  /api/HealthMonitoring/alerts           - 健康警报");
-Console.WriteLine();
-app.Run();
+Console.WriteLine("📌 数据管理 API：");
+Console.WriteLine("   房间管理：/api/RoomManagement/*");
+Console.WriteLine("   设备管理：/api/DeviceManagement/*");
+Console.WriteLine("   围栏管理：/api/FenceManagement/*");
+Console.WriteLine("   围栏日志：/api/FenceLog/*");
+Console.WriteLine("   健康数据：/api/HealthData/*");
 Console.WriteLine();
 app.Run();
