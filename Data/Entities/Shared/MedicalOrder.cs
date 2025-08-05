@@ -27,8 +27,6 @@ namespace api.Models
         [StringLength(50)]
         public string duration { get; set; } = string.Empty; // 持续时间
 
-        // ------------------- 导航属性 -------------------
-
         [ForeignKey("elderly_id")]
         public ElderlyInfo? Elderly { get; set; } // 导航属性：关联老人
 
