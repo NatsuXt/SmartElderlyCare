@@ -48,3 +48,15 @@ public DbSet<OperationLog> OperationLogs { get; set; }
 
 //访客登记表(VisitorRegistration)   
 public DbSet<VisitorRegistration> VisitorRegistrations { get; set; }
+
+//SOS通知表（SosNotification）
+public DbSet<SosNotification> SosNotifications { get; set; }
+
+//员工计划表（StaffSchedule）
+public DbSet<StaffSchedule> StaffSchedules { get; set; }
+
+//员工位置表（StaffLocation）
+public DbSet<StaffLocation> StaffLocations { get; set; }
+
+//房间表（Room）
+public DbSet<Room> Rooms { get; set; }
