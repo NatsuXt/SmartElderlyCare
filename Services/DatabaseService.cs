@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using Oracle.ManagedDataAccess.Client;
+using System.Reflection;
 
 namespace RoomDeviceManagement.Services
 {
@@ -14,7 +15,7 @@ namespace RoomDeviceManagement.Services
         public DatabaseService()
         {
             // Oracle 18c 连接字符串配置
-            _connectionString = "Data Source=（我们服务器的主机名）:（端口号）/orcl;User Id=FIBRE;Password=（如需要，可以找作者要）;";
+            _connectionString = "Data Source=47.96.238.102:1521/orcl;User Id=FIBRE;Password=FIBRE2025;";
         }
 
         public DatabaseService(string connectionString)
@@ -29,6 +30,155 @@ namespace RoomDeviceManagement.Services
         public OracleConnection GetConnection()
         {
             return new OracleConnection(_connectionString);
+        }
+
+        /// <summary>
+        /// 异步查询多个结果
+        /// </summary>
+        public async Task<IEnumerable<T>> QueryAsync<T>(string sql, object? parameters = null) where T : new()
+        {
+            try
+            {
+                using var connection = GetConnection();
+                await connection.OpenAsync();
+                
+                using var command = new OracleCommand(sql, connection);
+                
+                if (parameters != null)
+                {
+                    AddParameters(command, parameters);
+                }
+
+                using var reader = await command.ExecuteReaderAsync();
+                return MapResults<T>(reader);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"异步查询失败：{ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 异步查询单个结果
+        /// </summary>
+        public async Task<T?> QueryFirstAsync<T>(string sql, object? parameters = null) where T : new()
+        {
+            var results = await QueryAsync<T>(sql, parameters);
+            return results.FirstOrDefault();
+        }
+
+        /// <summary>
+        /// 异步执行非查询SQL
+        /// </summary>
+        public async Task<int> ExecuteAsync(string sql, object? parameters = null)
+        {
+            try
+            {
+                using var connection = GetConnection();
+                await connection.OpenAsync();
+                
+                using var command = new OracleCommand(sql, connection);
+                
+                if (parameters != null)
+                {
+                    AddParameters(command, parameters);
+                }
+
+                return await command.ExecuteNonQueryAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"异步执行SQL失败：{ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 添加参数到命令
+        /// </summary>
+        private void AddParameters(OracleCommand command, object parameters)
+        {
+            var properties = parameters.GetType().GetProperties();
+            
+            foreach (var prop in properties)
+            {
+                var value = prop.GetValue(parameters) ?? DBNull.Value;
+                command.Parameters.Add(new OracleParameter($"@{prop.Name}", value));
+            }
+        }
+
+        /// <summary>
+        /// 映射查询结果到对象列表
+        /// </summary>
+        private IEnumerable<T> MapResults<T>(OracleDataReader reader) where T : new()
+        {
+            var results = new List<T>();
+            var properties = typeof(T).GetProperties();
+            
+            while (reader.Read())
+            {
+                var obj = new T();
+                
+                foreach (var prop in properties)
+                {
+                    try
+                    {
+                        // 尝试通过属性名或Column特性获取字段名
+                        string columnName = GetColumnName(prop);
+                        
+                        if (HasColumn(reader, columnName))
+                        {
+                            var value = reader[columnName];
+                            if (value != DBNull.Value)
+                            {
+                                // 处理类型转换
+                                if (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                                {
+                                    var underlyingType = Nullable.GetUnderlyingType(prop.PropertyType);
+                                    prop.SetValue(obj, Convert.ChangeType(value, underlyingType!));
+                                }
+                                else
+                                {
+                                    prop.SetValue(obj, Convert.ChangeType(value, prop.PropertyType));
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"映射属性 {prop.Name} 失败: {ex.Message}");
+                    }
+                }
+                
+                results.Add(obj);
+            }
+            
+            return results;
+        }
+
+        /// <summary>
+        /// 获取列名（支持Column特性）
+        /// </summary>
+        private string GetColumnName(PropertyInfo prop)
+        {
+            var columnAttr = prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>();
+            return columnAttr?.Name ?? prop.Name.ToUpper();
+        }
+
+        /// <summary>
+        /// 检查是否存在指定列
+        /// </summary>
+        private bool HasColumn(OracleDataReader reader, string columnName)
+        {
+            try
+            {
+                return reader.GetOrdinal(columnName) >= 0;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
