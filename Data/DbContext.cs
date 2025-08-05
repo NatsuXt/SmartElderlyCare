@@ -39,3 +39,12 @@ public DbSet<ActivityParticipation> ActivityParticipations { get; set; }
 
 // 饮食推荐表(DietRecommendation)
 public DbSet<DietRecommendation> DietRecommendations { get; set; }
+
+//系统公告表(SystemAnnouncements)
+public DbSet<SystemAnnouncements> SystemAnnouncements { get; set; }
+
+//操作日志表(OperationLog)
+public DbSet<OperationLog> OperationLogs { get; set; }
+
+//访客登记表(VisitorRegistration)   
+public DbSet<VisitorRegistration> VisitorRegistrations { get; set; }
