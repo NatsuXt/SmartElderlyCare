@@ -29,3 +29,14 @@ E:\MyTest\database_keshe\RoomDeviceManagement\obj\Debug\net8.0\refint\RoomDevice
 E:\MyTest\database_keshe\RoomDeviceManagement\obj\Debug\net8.0\RoomDeviceManagement.pdb
 E:\MyTest\database_keshe\RoomDeviceManagement\obj\Debug\net8.0\RoomDeviceManagement.genruntimeconfig.cache
 E:\MyTest\database_keshe\RoomDeviceManagement\obj\Debug\net8.0\ref\RoomDeviceManagement.dll
+E:\MyTest\database_keshe\obj\Debug\net8.0\RoomDeviceManagement.csproj.AssemblyReference.cache
+E:\MyTest\database_keshe\obj\Debug\net8.0\RoomDeviceManagement.GeneratedMSBuildEditorConfig.editorconfig
+E:\MyTest\database_keshe\obj\Debug\net8.0\RoomDeviceManagement.AssemblyInfoInputs.cache
+E:\MyTest\database_keshe\obj\Debug\net8.0\RoomDeviceManagement.AssemblyInfo.cs
+E:\MyTest\database_keshe\obj\Debug\net8.0\RoomDeviceManagement.csproj.CoreCompileInputs.cache
+E:\MyTest\database_keshe\obj\Debug\net8.0\RoomDeviceManagement.sourcelink.json
+E:\MyTest\database_keshe\obj\Debug\net8.0\RoomDeviceManagement.dll
+E:\MyTest\database_keshe\obj\Debug\net8.0\refint\RoomDeviceManagement.dll
+E:\MyTest\database_keshe\obj\Debug\net8.0\RoomDeviceManagement.pdb
+E:\MyTest\database_keshe\obj\Debug\net8.0\RoomDeviceManagement.MvcApplicationPartsAssemblyInfo.cs
+E:\MyTest\database_keshe\obj\Debug\net8.0\RoomDeviceManagement.MvcApplicationPartsAssemblyInfo.cache

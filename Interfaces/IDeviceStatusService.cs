@@ -89,5 +89,76 @@ namespace RoomDeviceManagement.Interfaces
         /// <param name="isOnline">是否在线</param>
         /// <returns>操作是否成功</returns>
         bool UpdateDeviceOnlineStatus(string deviceId, bool isOnline);
+
+        /// <summary>
+        /// 根据设备ID获取设备状态（整数ID版本）
+        /// </summary>
+        /// <param name="deviceId">设备ID</param>
+        /// <returns>设备状态</returns>
+        DeviceStatus? GetDeviceById(int deviceId);
+
+        /// <summary>
+        /// 根据房间号获取设备列表
+        /// </summary>
+        /// <param name="roomNumber">房间号</param>
+        /// <returns>设备列表</returns>
+        List<DeviceStatus> GetDevicesByRoom(string roomNumber);
+
+        /// <summary>
+        /// 删除设备（整数ID版本）
+        /// </summary>
+        /// <param name="deviceId">设备ID</param>
+        /// <returns>操作是否成功</returns>
+        bool DeleteDevice(int deviceId);
+
+        /// <summary>
+        /// 获取设备统计信息
+        /// </summary>
+        /// <returns>统计信息</returns>
+        object GetDeviceStatistics();
+
+        /// <summary>
+        /// 批量更新设备状态
+        /// </summary>
+        /// <param name="deviceIds">设备ID列表</param>
+        /// <param name="status">新状态</param>
+        /// <returns>更新成功的设备数量</returns>
+        int BatchUpdateDeviceStatus(List<int> deviceIds, string status);
+
+        /// <summary>
+        /// 搜索设备
+        /// </summary>
+        /// <param name="keyword">搜索关键词</param>
+        /// <returns>设备列表</returns>
+        List<DeviceStatus> SearchDevices(string keyword);
+
+        /// <summary>
+        /// 重启设备
+        /// </summary>
+        /// <param name="deviceId">设备ID</param>
+        /// <returns>操作是否成功</returns>
+        bool RestartDevice(int deviceId);
+
+        /// <summary>
+        /// 设备故障检测
+        /// </summary>
+        /// <param name="deviceId">设备ID</param>
+        /// <returns>检测结果</returns>
+        object FaultDetection(int deviceId);
+
+        /// <summary>
+        /// 获取设备维护记录
+        /// </summary>
+        /// <param name="deviceId">设备ID</param>
+        /// <returns>维护记录</returns>
+        object GetMaintenanceRecords(int deviceId);
+
+        /// <summary>
+        /// 添加维护记录
+        /// </summary>
+        /// <param name="deviceId">设备ID</param>
+        /// <param name="maintenanceInfo">维护信息</param>
+        /// <returns>操作是否成功</returns>
+        bool AddMaintenanceRecord(int deviceId, object maintenanceInfo);
     }
 }

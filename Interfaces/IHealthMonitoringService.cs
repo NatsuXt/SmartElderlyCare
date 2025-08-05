@@ -94,5 +94,68 @@ namespace RoomDeviceManagement.Interfaces
         /// <param name="days">统计天数</param>
         /// <returns>统计结果</returns>
         Dictionary<string, object> GetHealthDataStatistics(string elderlyId, string monitoringType, int days = 7);
+
+        /// <summary>
+        /// 根据记录ID获取健康监测记录
+        /// </summary>
+        /// <param name="recordId">记录ID</param>
+        /// <returns>健康监测记录</returns>
+        HealthMonitoring? GetHealthRecordById(int recordId);
+
+        /// <summary>
+        /// 根据老人ID获取健康监测记录（整数ID版本）
+        /// </summary>
+        /// <param name="elderlyId">老人ID</param>
+        /// <returns>健康监测记录列表</returns>
+        List<HealthMonitoring> GetHealthRecordsByElderlyId(int elderlyId);
+
+        /// <summary>
+        /// 根据日期范围获取健康监测记录
+        /// </summary>
+        /// <param name="startDate">开始日期</param>
+        /// <param name="endDate">结束日期</param>
+        /// <returns>健康监测记录列表</returns>
+        List<HealthMonitoring> GetHealthRecordsByDateRange(DateTime startDate, DateTime endDate);
+
+        /// <summary>
+        /// 根据健康状态获取监测记录
+        /// </summary>
+        /// <param name="status">健康状态</param>
+        /// <returns>健康监测记录列表</returns>
+        List<HealthMonitoring> GetHealthRecordsByStatus(string status);
+
+        /// <summary>
+        /// 删除健康监测记录
+        /// </summary>
+        /// <param name="recordId">记录ID</param>
+        /// <returns>操作是否成功</returns>
+        bool DeleteHealthRecord(int recordId);
+
+        /// <summary>
+        /// 获取健康监测统计信息
+        /// </summary>
+        /// <returns>统计信息</returns>
+        object GetHealthStatistics();
+
+        /// <summary>
+        /// 根据老人ID获取最新健康记录
+        /// </summary>
+        /// <param name="elderlyId">老人ID</param>
+        /// <returns>最新健康记录</returns>
+        HealthMonitoring? GetLatestHealthRecordByElderlyId(int elderlyId);
+
+        /// <summary>
+        /// 批量添加健康监测记录
+        /// </summary>
+        /// <param name="records">健康监测记录列表</param>
+        /// <returns>添加成功的记录数量</returns>
+        int BatchAddHealthRecords(List<HealthMonitoring> records);
+
+        /// <summary>
+        /// 搜索健康监测记录
+        /// </summary>
+        /// <param name="keyword">搜索关键词</param>
+        /// <returns>健康监测记录列表</returns>
+        List<HealthMonitoring> SearchHealthRecords(string keyword);
     }
 }

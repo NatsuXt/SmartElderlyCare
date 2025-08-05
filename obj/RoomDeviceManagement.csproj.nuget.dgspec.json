@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "E:\\MyTest\\database_keshe\\RoomDeviceManagement\\RoomDeviceManagement.csproj": {}
+    "E:\\MyTest\\database_keshe\\RoomDeviceManagement.csproj": {}
   },
   "projects": {
-    "E:\\MyTest\\database_keshe\\RoomDeviceManagement\\RoomDeviceManagement.csproj": {
+    "E:\\MyTest\\database_keshe\\RoomDeviceManagement.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\MyTest\\database_keshe\\RoomDeviceManagement\\RoomDeviceManagement.csproj",
+        "projectUniqueName": "E:\\MyTest\\database_keshe\\RoomDeviceManagement.csproj",
         "projectName": "RoomDeviceManagement",
-        "projectPath": "E:\\MyTest\\database_keshe\\RoomDeviceManagement\\RoomDeviceManagement.csproj",
+        "projectPath": "E:\\MyTest\\database_keshe\\RoomDeviceManagement.csproj",
         "packagesPath": "C:\\Users\\F1bre\\.nuget\\packages\\",
-        "outputPath": "E:\\MyTest\\database_keshe\\RoomDeviceManagement\\obj\\",
+        "outputPath": "E:\\MyTest\\database_keshe\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\F1bre\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -46,6 +46,10 @@
             "Oracle.ManagedDataAccess.Core": {
               "target": "Package",
               "version": "[23.9.1, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[6.5.0, )"
             }
           },
           "imports": [
@@ -60,6 +64,9 @@
           "assetTargetFallback": true,
           "warn": true,
           "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }

@@ -68,5 +68,71 @@ namespace RoomDeviceManagement.Interfaces
         /// <param name="roomId">房间ID</param>
         /// <returns>是否可入住</returns>
         bool IsRoomAvailable(int roomId);
+
+        /// <summary>
+        /// 根据房间号获取房间信息
+        /// </summary>
+        /// <param name="roomNumber">房间号</param>
+        /// <returns>房间信息</returns>
+        RoomManagement? GetRoomByNumber(string roomNumber);
+
+        /// <summary>
+        /// 根据房间类型获取房间列表
+        /// </summary>
+        /// <param name="roomType">房间类型</param>
+        /// <returns>房间列表</returns>
+        List<RoomManagement> GetRoomsByType(string roomType);
+
+        /// <summary>
+        /// 获取房间统计信息
+        /// </summary>
+        /// <returns>统计信息</returns>
+        object GetRoomStatistics();
+
+        /// <summary>
+        /// 根据价格范围获取房间
+        /// </summary>
+        /// <param name="minPrice">最低价格</param>
+        /// <param name="maxPrice">最高价格</param>
+        /// <returns>房间列表</returns>
+        List<RoomManagement> GetRoomsByPriceRange(float minPrice, float maxPrice);
+
+        /// <summary>
+        /// 入住房间
+        /// </summary>
+        /// <param name="roomId">房间ID</param>
+        /// <param name="checkInInfo">入住信息</param>
+        /// <returns>操作是否成功</returns>
+        bool CheckInRoom(int roomId, object checkInInfo);
+
+        /// <summary>
+        /// 退房
+        /// </summary>
+        /// <param name="roomId">房间ID</param>
+        /// <returns>操作是否成功</returns>
+        bool CheckOutRoom(int roomId);
+
+        /// <summary>
+        /// 设置房间维护状态
+        /// </summary>
+        /// <param name="roomId">房间ID</param>
+        /// <param name="maintenanceInfo">维护信息</param>
+        /// <returns>操作是否成功</returns>
+        bool SetRoomMaintenance(int roomId, object maintenanceInfo);
+
+        /// <summary>
+        /// 搜索房间
+        /// </summary>
+        /// <param name="keyword">搜索关键词</param>
+        /// <returns>房间列表</returns>
+        List<RoomManagement> SearchRooms(string keyword);
+
+        /// <summary>
+        /// 批量更新房间状态
+        /// </summary>
+        /// <param name="roomIds">房间ID列表</param>
+        /// <param name="status">新状态</param>
+        /// <returns>更新成功的房间数量</returns>
+        int BatchUpdateRoomStatus(List<int> roomIds, string status);
     }
 }
