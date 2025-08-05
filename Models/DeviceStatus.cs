@@ -1,72 +1,72 @@
-using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RoomDeviceManagement.Models
 {
     /// <summary>
     /// 设备状态实体类
     /// </summary>
+    [Table("DeviceStatus")]
     public class DeviceStatus
     {
         /// <summary>
-        /// 设备ID（主键）
+        /// 设备ID（主键，自增）
         /// </summary>
         [Key]
+        [Column("device_id")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int DeviceId { get; set; }
 
         /// <summary>
         /// 设备名称
         /// </summary>
         [Required]
-        [StringLength(100)]
-        public string? DeviceName { get; set; }
+        [Column("device_name")]
+        [MaxLength(100)]
+        public string DeviceName { get; set; } = string.Empty;
 
         /// <summary>
-        /// 设备类型（如：心率监测器、血压计、跌倒检测器、摄像头等）
+        /// 设备类型（如：智能床垫、心率监测仪等）
         /// </summary>
         [Required]
-        [StringLength(50)]
-        public string? DeviceType { get; set; }
+        [Column("device_type")]
+        [MaxLength(50)]
+        public string DeviceType { get; set; } = string.Empty;
 
         /// <summary>
         /// 安装日期
         /// </summary>
         [Required]
+        [Column("installation_date")]
         public DateTime InstallationDate { get; set; }
 
         /// <summary>
-        /// 设备状态（如：正常、故障、维护中、停用）
+        /// 设备状态（如：正常、故障）
         /// </summary>
         [Required]
-        [StringLength(20)]
-        public string? Status { get; set; }
+        [Column("status")]
+        [MaxLength(20)]
+        public string Status { get; set; } = string.Empty;
 
         /// <summary>
         /// 最后维护日期
         /// </summary>
+        [Column("last_maintenance_date")]
         public DateTime? LastMaintenanceDate { get; set; }
 
         /// <summary>
         /// 设备维护状态
         /// </summary>
-        [StringLength(20)]
+        [Column("maintenance_status")]
+        [MaxLength(20)]
         public string? MaintenanceStatus { get; set; }
 
         /// <summary>
         /// 设备所在位置
         /// </summary>
         [Required]
-        [StringLength(100)]
-        public string? Location { get; set; }
-
-        /// <summary>
-        /// 创建时间
-        /// </summary>
-        public DateTime CreatedTime { get; set; } = DateTime.Now;
-
-        /// <summary>
-        /// 更新时间
-        /// </summary>
-        public DateTime UpdatedTime { get; set; } = DateTime.Now;
+        [Column("location")]
+        [MaxLength(100)]
+        public string Location { get; set; } = string.Empty;
     }
 }
