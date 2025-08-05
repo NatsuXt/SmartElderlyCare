@@ -82,3 +82,4 @@ public DbSet<EmergencySOS> EmergencySos { get; set; }
 //消毒表（DisinfectionRecord）
 public DbSet<DisinfectionRecord> DisinfectionRecords { get; set; }
 
+public DbSet<FeeDetail> FeeDetails { get; set; }
