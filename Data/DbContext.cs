@@ -1,5 +1,5 @@
-// 员工信息表 (StaffInfo)
-public DbSet<StaffInfo> StaffInfos { get; set; }
+// 员工信息表 (STAFFINFO)
+public DbSet<STAFFINFO> StaffInfos { get; set; }
 
 // 老人信息表 (ElderInfo)
 public DbSet<ElderlyInfo> ElderlyInfos { get; set; }
@@ -49,14 +49,14 @@ public DbSet<OperationLog> OperationLogs { get; set; }
 //访客登记表(VisitorRegistration)   
 public DbSet<VisitorRegistration> VisitorRegistrations { get; set; }
 
-//SOS通知表（SosNotification）
-public DbSet<SosNotification> SosNotifications { get; set; }
+//SOS通知表（SOSNOTIFICATION）
+public DbSet<SOSNOTIFICATION> SOSNotifications { get; set; }
 
-//员工计划表（StaffSchedule）
-public DbSet<StaffSchedule> StaffSchedules { get; set; }
+//员工计划表（STAFFSCHEDULE）
+public DbSet<STAFFSCHEDULE> StaffSchedules { get; set; }
 
-//员工位置表（StaffLocation）
-public DbSet<StaffLocation> StaffLocations { get; set; }
+//员工位置表（STAFFLOCATIION）
+public DbSet<STAFFLOCATION> StaffLocations { get; set; }
 
 // 异常健康预警表 (HealthAlert)
 public DbSet<HealthAlert> HealthAlerts { get; set; }
@@ -73,11 +73,12 @@ public DbSet<MedicineProcurement> MedicineProcurements { get; set; }
 // 语音助手提示表 (VoiceAssistantReminder)
 public DbSet<VoiceAssistantReminder> VoiceAssistantReminders { get; set; }
 
-//SOS（EmergencySOS）
-public DbSet<EmergencySOS> EmergencySos { get; set; }
+//SOS（EMERGENCYSOS）
+   public DbSet<EMERGENCYSOS> EmergencySOS { get; set; }
 
-//消毒表（DisinfectionRecord）
-public DbSet<DisinfectionRecord> DisinfectionRecords { get; set; }
+//消毒表（DISINFECTIONRECORD）
+public DbSet<DISINFECTIONRECORD> DisinfectionRecords { get; set; }
 
 
 public DbSet<FeeDetail> FeeDetails { get; set; }
+
