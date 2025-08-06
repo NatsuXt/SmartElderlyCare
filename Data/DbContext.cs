@@ -58,9 +58,6 @@ public DbSet<StaffSchedule> StaffSchedules { get; set; }
 //员工位置表（StaffLocation）
 public DbSet<StaffLocation> StaffLocations { get; set; }
 
-//房间表（Room）
-public DbSet<Room> Rooms { get; set; }
-
 // 异常健康预警表 (HealthAlert)
 public DbSet<HealthAlert> HealthAlerts { get; set; }
 
@@ -81,5 +78,6 @@ public DbSet<EmergencySOS> EmergencySos { get; set; }
 
 //消毒表（DisinfectionRecord）
 public DbSet<DisinfectionRecord> DisinfectionRecords { get; set; }
+
 
 public DbSet<FeeDetail> FeeDetails { get; set; }
