@@ -31,12 +31,13 @@ namespace RoomDeviceManagement.Services
                     "roomNumber" => $"ORDER BY room_number {(request.SortDesc ? "DESC" : "ASC")}",
                     "roomType" => $"ORDER BY room_type {(request.SortDesc ? "DESC" : "ASC")}",
                     "capacity" => $"ORDER BY capacity {(request.SortDesc ? "DESC" : "ASC")}",
+                    "floor" => $"ORDER BY floor {(request.SortDesc ? "DESC" : "ASC")}",
                     _ => "ORDER BY room_id ASC"
                 };
 
                 var sql = $@"
                     SELECT * FROM (
-                        SELECT room_id, room_number, room_type, capacity, status,
+                        SELECT room_id, room_number, room_type, capacity, status, rate, bed_type, floor,
                                ROW_NUMBER() OVER ({orderClause}) as rn
                         FROM RoomManagement 
                         {whereClause}
@@ -58,10 +59,11 @@ namespace RoomDeviceManagement.Services
                 }
                 
                 // 获取总数
-                var totalCountResult = await _databaseService.QueryAsync<dynamic>(countSql, countParameters);
-                var totalCount = Convert.ToInt32(totalCountResult.First().GetType().GetProperty("COUNT(*)")?.GetValue(totalCountResult.First()));
+                var totalCountResults = await _databaseService.QueryAsync<dynamic>(countSql, countParameters);
+                var totalCount = Convert.ToInt32(totalCountResults.First().GetType().GetProperty("COUNT(*)") != null ?
+                    totalCountResults.First().GetType().GetProperty("COUNT(*)")?.GetValue(totalCountResults.First()) : 0);
 
-                // 获取数据
+                // 获取房间数据 - 直接使用RoomManagement模型
                 var rooms = await _databaseService.QueryAsync<RoomManagement>(sql, parameters);
                 
                 var roomList = rooms.Select(r => new RoomDetailDto
@@ -71,9 +73,12 @@ namespace RoomDeviceManagement.Services
                     RoomType = r.RoomType,
                     Capacity = r.Capacity,
                     Status = r.Status,
-                    Description = null, // Field not available in current database schema
-                    CreatedAt = DateTime.Now,   // Field not available in current database schema
-                    UpdatedAt = DateTime.Now    // Field not available in current database schema
+                    Rate = r.Rate,
+                    BedType = r.BedType,
+                    Floor = r.Floor,
+                    Description = null, // 不在数据库模型中
+                    CreatedAt = DateTime.Now,   // 不在数据库模型中
+                    UpdatedAt = DateTime.Now    // 不在数据库模型中
                 }).ToList();
 
                 return new ApiResponse<List<RoomDetailDto>>
@@ -103,26 +108,28 @@ namespace RoomDeviceManagement.Services
             try
             {
                 var sql = @"
-                    SELECT room_id, room_number, room_type, capacity, status, description, 
-                           created_at, updated_at
+                    SELECT room_id, room_number, room_type, capacity, status, rate, bed_type, floor
                     FROM RoomManagement 
                     WHERE room_id = :roomId";
 
-                var results = await _databaseService.QueryAsync<dynamic>(sql, new { roomId });
-                var room = results.FirstOrDefault();
+                var rooms = await _databaseService.QueryAsync<RoomManagement>(sql, new { roomId });
+                var room = rooms.FirstOrDefault();
                 
                 if (room != null)
                 {
                     var roomDetail = new RoomDetailDto
                     {
-                        RoomId = Convert.ToInt32(room.ROOM_ID),
-                        RoomNumber = room.ROOM_NUMBER?.ToString() ?? "",
-                        RoomType = room.ROOM_TYPE?.ToString() ?? "",
-                        Capacity = Convert.ToInt32(room.CAPACITY),
-                        Status = room.STATUS?.ToString() ?? "",
-                        Description = room.DESCRIPTION?.ToString(),
-                        CreatedAt = Convert.ToDateTime(room.CREATED_AT),
-                        UpdatedAt = Convert.ToDateTime(room.UPDATED_AT)
+                        RoomId = room.RoomId,
+                        RoomNumber = room.RoomNumber,
+                        RoomType = room.RoomType,
+                        Capacity = room.Capacity,
+                        Status = room.Status,
+                        Rate = room.Rate,
+                        BedType = room.BedType,
+                        Floor = room.Floor,
+                        Description = null,
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now
                     };
 
                     return new ApiResponse<RoomDetailDto>
@@ -158,23 +165,28 @@ namespace RoomDeviceManagement.Services
             try
             {
                 var sql = @"
-                    INSERT INTO RoomManagement (room_number, room_type, capacity, status, description, created_at, updated_at)
-                    VALUES (:roomNumber, :roomType, :capacity, :status, :description, SYSDATE, SYSDATE)";
+                    INSERT INTO RoomManagement (
+                        room_number, room_type, capacity, status, rate, bed_type, floor
+                    ) VALUES (
+                        :RoomNumber, :RoomType, :Capacity, :Status, :Rate, :BedType, :Floor
+                    )";
 
                 var parameters = new
                 {
-                    roomNumber = dto.RoomNumber,
-                    roomType = dto.RoomType,
-                    capacity = dto.Capacity,
-                    status = dto.Status,
-                    description = dto.Description
+                    RoomNumber = dto.RoomNumber,
+                    RoomType = dto.RoomType,
+                    Capacity = dto.Capacity,
+                    Status = dto.Status,
+                    Rate = dto.Rate,
+                    BedType = dto.BedType,
+                    Floor = dto.Floor
                 };
 
                 var result = await _databaseService.ExecuteAsync(sql, parameters);
                 
                 if (result > 0)
                 {
-                    // 获取新创建的房间（通过房间号查找）
+                    // 通过房间号获取新创建的房间
                     var createdRoom = await GetRoomByRoomNumberAsync(dto.RoomNumber);
                     if (createdRoom.Success)
                     {
@@ -208,26 +220,28 @@ namespace RoomDeviceManagement.Services
             try
             {
                 var sql = @"
-                    SELECT room_id, room_number, room_type, capacity, status, description, 
-                           created_at, updated_at
+                    SELECT room_id, room_number, room_type, capacity, status, rate, bed_type, floor
                     FROM RoomManagement 
                     WHERE room_number = :roomNumber";
 
-                var results = await _databaseService.QueryAsync<dynamic>(sql, new { roomNumber });
-                var room = results.FirstOrDefault();
+                var rooms = await _databaseService.QueryAsync<RoomManagement>(sql, new { roomNumber });
+                var room = rooms.FirstOrDefault();
                 
                 if (room != null)
                 {
                     var roomDetail = new RoomDetailDto
                     {
-                        RoomId = Convert.ToInt32(room.ROOM_ID),
-                        RoomNumber = room.ROOM_NUMBER?.ToString() ?? "",
-                        RoomType = room.ROOM_TYPE?.ToString() ?? "",
-                        Capacity = Convert.ToInt32(room.CAPACITY),
-                        Status = room.STATUS?.ToString() ?? "",
-                        Description = room.DESCRIPTION?.ToString(),
-                        CreatedAt = Convert.ToDateTime(room.CREATED_AT),
-                        UpdatedAt = Convert.ToDateTime(room.UPDATED_AT)
+                        RoomId = room.RoomId,
+                        RoomNumber = room.RoomNumber,
+                        RoomType = room.RoomType,
+                        Capacity = room.Capacity,
+                        Status = room.Status,
+                        Rate = room.Rate,
+                        BedType = room.BedType,
+                        Floor = room.Floor,
+                        Description = null,
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now
                     };
 
                     return new ApiResponse<RoomDetailDto>
@@ -285,10 +299,20 @@ namespace RoomDeviceManagement.Services
                     setParts.Add("status = :status");
                     parameters["status"] = dto.Status;
                 }
-                if (dto.Description != null)
+                if (dto.Rate.HasValue)
                 {
-                    setParts.Add("description = :description");
-                    parameters["description"] = dto.Description;
+                    setParts.Add("rate = :rate");
+                    parameters["rate"] = dto.Rate.Value;
+                }
+                if (!string.IsNullOrEmpty(dto.BedType))
+                {
+                    setParts.Add("bed_type = :bedType");
+                    parameters["bedType"] = dto.BedType;
+                }
+                if (dto.Floor.HasValue)
+                {
+                    setParts.Add("floor = :floor");
+                    parameters["floor"] = dto.Floor.Value;
                 }
 
                 if (!setParts.Any())
@@ -300,7 +324,6 @@ namespace RoomDeviceManagement.Services
                     };
                 }
 
-                setParts.Add("updated_at = SYSDATE");
                 var sql = $"UPDATE RoomManagement SET {string.Join(", ", setParts)} WHERE room_id = :roomId";
 
                 var result = await _databaseService.ExecuteAsync(sql, parameters);
@@ -339,23 +362,9 @@ namespace RoomDeviceManagement.Services
         {
             try
             {
-                // 检查房间是否有关联设备
-                var deviceCheckSql = "SELECT COUNT(*) as device_count FROM DeviceStatus WHERE room_id = :roomId";
-                var deviceResults = await _databaseService.QueryAsync<dynamic>(deviceCheckSql, new { roomId });
-                var deviceCount = Convert.ToInt32(deviceResults.First().DEVICE_COUNT);
-                
-                if (deviceCount > 0)
-                {
-                    return new ApiResponse<bool>
-                    {
-                        Success = false,
-                        Message = $"无法删除房间，该房间还有 {deviceCount} 个关联设备，请先移除设备"
-                    };
-                }
-
                 var sql = "DELETE FROM RoomManagement WHERE room_id = :roomId";
                 var result = await _databaseService.ExecuteAsync(sql, new { roomId });
-
+                
                 if (result > 0)
                 {
                     return new ApiResponse<bool>
@@ -369,7 +378,8 @@ namespace RoomDeviceManagement.Services
                 return new ApiResponse<bool>
                 {
                     Success = false,
-                    Message = "房间不存在"
+                    Message = "房间不存在",
+                    Data = false
                 };
             }
             catch (Exception ex)
@@ -378,7 +388,8 @@ namespace RoomDeviceManagement.Services
                 return new ApiResponse<bool>
                 {
                     Success = false,
-                    Message = $"删除房间失败: {ex.Message}"
+                    Message = $"删除房间失败: {ex.Message}",
+                    Data = false
                 };
             }
         }
@@ -390,41 +401,44 @@ namespace RoomDeviceManagement.Services
         {
             try
             {
-                var totalRoomsSql = "SELECT COUNT(*) FROM ROOMMANAGEMENT";
-                var occupiedRoomsSql = "SELECT COUNT(*) FROM ROOMMANAGEMENT WHERE STATUS = '已入住'";
-                var availableRoomsSql = "SELECT COUNT(*) FROM ROOMMANAGEMENT WHERE STATUS = '空闲'";
-                var maintenanceRoomsSql = "SELECT COUNT(*) FROM ROOMMANAGEMENT WHERE STATUS = '维护中'";
+                var sql = @"
+                    SELECT 
+                        COUNT(*) as TotalRooms,
+                        COUNT(CASE WHEN status = '已入住' THEN 1 END) as OccupiedRooms,
+                        COUNT(CASE WHEN status = '空闲' THEN 1 END) as AvailableRooms,
+                        AVG(capacity) as AverageCapacity,
+                        AVG(rate) as AverageRate,
+                        COUNT(DISTINCT floor) as TotalFloors
+                    FROM RoomManagement";
 
-                var totalRooms = await _databaseService.QueryAsync<int>(totalRoomsSql);
-                var occupiedRooms = await _databaseService.QueryAsync<int>(occupiedRoomsSql);
-                var availableRooms = await _databaseService.QueryAsync<int>(availableRoomsSql);
-                var maintenanceRooms = await _databaseService.QueryAsync<int>(maintenanceRoomsSql);
+                var results = await _databaseService.QueryAsync<dynamic>(sql);
+                var stats = results.First();
 
                 var statistics = new
                 {
-                    TotalRooms = totalRooms.FirstOrDefault(),
-                    OccupiedRooms = occupiedRooms.FirstOrDefault(),
-                    AvailableRooms = availableRooms.FirstOrDefault(),
-                    MaintenanceRooms = maintenanceRooms.FirstOrDefault(),
-                    OccupancyRate = totalRooms.FirstOrDefault() > 0 
-                        ? (double)occupiedRooms.FirstOrDefault() / totalRooms.FirstOrDefault() * 100 
-                        : 0
+                    TotalRooms = Convert.ToInt32(stats.GetType().GetProperty("TOTALROOMS")?.GetValue(stats) ?? 0),
+                    OccupiedRooms = Convert.ToInt32(stats.GetType().GetProperty("OCCUPIEDROOMS")?.GetValue(stats) ?? 0),
+                    AvailableRooms = Convert.ToInt32(stats.GetType().GetProperty("AVAILABLEROOMS")?.GetValue(stats) ?? 0),
+                    AverageCapacity = Convert.ToDouble(stats.GetType().GetProperty("AVERAGECAPACITY")?.GetValue(stats) ?? 0),
+                    AverageRate = Convert.ToDecimal(stats.GetType().GetProperty("AVERAGERATE")?.GetValue(stats) ?? 0),
+                    TotalFloors = Convert.ToInt32(stats.GetType().GetProperty("TOTALFLOORS")?.GetValue(stats) ?? 0),
+                    LastUpdated = DateTime.Now
                 };
 
                 return new ApiResponse<object>
                 {
                     Success = true,
-                    Message = "获取房间统计信息成功",
+                    Message = "获取房间统计成功",
                     Data = statistics
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "获取房间统计信息失败");
+                _logger.LogError(ex, "获取房间统计失败");
                 return new ApiResponse<object>
                 {
                     Success = false,
-                    Message = $"获取房间统计信息失败: {ex.Message}"
+                    Message = $"获取房间统计失败: {ex.Message}"
                 };
             }
         }

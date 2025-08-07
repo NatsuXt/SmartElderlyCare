@@ -20,7 +20,12 @@ namespace RoomDeviceManagement.Controllers
         /// <summary>
         /// 获取房间列表（支持分页和搜索）
         /// </summary>
-        [HttpGet]
+        /// <param name="page">页码，默认为1</param>
+        /// <param name="pageSize">每页条数，默认为20</param>
+        /// <param name="search">搜索关键词（房间号或房间类型）</param>
+        /// <param name="sortBy">排序字段（roomNumber, roomType, capacity, floor）</param>
+        /// <param name="sortDesc">是否降序排列</param>
+        [HttpGet("rooms")]
         public async Task<ActionResult<ApiResponse<List<RoomDetailDto>>>> GetRooms(
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20,
@@ -57,7 +62,7 @@ namespace RoomDeviceManagement.Controllers
                 return StatusCode(500, new ApiResponse<List<RoomDetailDto>>
                 {
                     Success = false,
-                    Message = "获取房间列表失败：" + ex.Message
+                    Message = "服务器内部错误"
                 });
             }
         }
@@ -65,76 +70,152 @@ namespace RoomDeviceManagement.Controllers
         /// <summary>
         /// 根据ID获取房间详情
         /// </summary>
-        [HttpGet("{id}")]
+        /// <param name="id">房间ID</param>
+        [HttpGet("rooms/{id}")]
         public async Task<ActionResult<ApiResponse<RoomDetailDto>>> GetRoom(int id)
         {
-            var result = await _roomManagementService.GetRoomByIdAsync(id);
-            
-            if (result.Success)
+            try
             {
-                return Ok(result);
+                var result = await _roomManagementService.GetRoomByIdAsync(id);
+                
+                if (result.Success)
+                {
+                    return Ok(result);
+                }
+                return NotFound(result);
             }
-            return NotFound(result);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "获取房间详情失败，房间ID: {RoomId}", id);
+                return StatusCode(500, new ApiResponse<RoomDetailDto>
+                {
+                    Success = false,
+                    Message = "服务器内部错误"
+                });
+            }
         }
 
         /// <summary>
         /// 创建房间
         /// </summary>
-        [HttpPost]
+        /// <param name="dto">房间创建数据</param>
+        [HttpPost("rooms")]
         public async Task<ActionResult<ApiResponse<RoomDetailDto>>> CreateRoom([FromBody] RoomCreateDto dto)
         {
-            var result = await _roomManagementService.CreateRoomAsync(dto);
-            
-            if (result.Success)
+            try
             {
-                return CreatedAtAction(nameof(GetRoom), new { id = result.Data?.RoomId }, result);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var result = await _roomManagementService.CreateRoomAsync(dto);
+                
+                if (result.Success)
+                {
+                    return CreatedAtAction(nameof(GetRoom), new { id = result.Data?.RoomId }, result);
+                }
+                return BadRequest(result);
             }
-            return BadRequest(result);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "创建房间失败");
+                return StatusCode(500, new ApiResponse<RoomDetailDto>
+                {
+                    Success = false,
+                    Message = "服务器内部错误"
+                });
+            }
         }
 
         /// <summary>
         /// 更新房间
         /// </summary>
-        [HttpPut("{id}")]
+        /// <param name="id">房间ID</param>
+        /// <param name="dto">房间更新数据</param>
+        [HttpPut("rooms/{id}")]
         public async Task<ActionResult<ApiResponse<RoomDetailDto>>> UpdateRoom(int id, [FromBody] RoomUpdateDto dto)
         {
-            var result = await _roomManagementService.UpdateRoomAsync(id, dto);
-            
-            if (result.Success)
+            try
             {
-                return Ok(result);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var result = await _roomManagementService.UpdateRoomAsync(id, dto);
+                
+                if (result.Success)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
             }
-            return BadRequest(result);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "更新房间失败，房间ID: {RoomId}", id);
+                return StatusCode(500, new ApiResponse<RoomDetailDto>
+                {
+                    Success = false,
+                    Message = "服务器内部错误"
+                });
+            }
         }
 
         /// <summary>
         /// 删除房间
         /// </summary>
-        [HttpDelete("{id}")]
+        /// <param name="id">房间ID</param>
+        [HttpDelete("rooms/{id}")]
         public async Task<ActionResult<ApiResponse<bool>>> DeleteRoom(int id)
         {
-            var result = await _roomManagementService.DeleteRoomAsync(id);
-            
-            if (result.Success)
+            try
             {
-                return Ok(result);
+                var result = await _roomManagementService.DeleteRoomAsync(id);
+                
+                if (result.Success)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
             }
-            return BadRequest(result);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "删除房间失败，房间ID: {RoomId}", id);
+                return StatusCode(500, new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "服务器内部错误",
+                    Data = false
+                });
+            }
         }
 
         /// <summary>
         /// 获取房间统计信息
         /// </summary>
-        [HttpGet("statistics")]
+        [HttpGet("rooms/statistics")]
         public async Task<ActionResult<ApiResponse<object>>> GetRoomStatistics()
         {
-            var result = await _roomManagementService.GetRoomStatisticsAsync();
-            
-            if (result.Success)
+            try
             {
-                return Ok(result);
+                var result = await _roomManagementService.GetRoomStatisticsAsync();
+                
+                if (result.Success)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
             }
-            return BadRequest(result);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "获取房间统计失败");
+                return StatusCode(500, new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "服务器内部错误"
+                });
+            }
         }
     }
 }

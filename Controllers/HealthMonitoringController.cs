@@ -127,31 +127,6 @@ namespace RoomDeviceManagement.Controllers
         }
 
         /// <summary>
-        /// 获取健康异常警报
-        /// </summary>
-        [HttpGet("alerts")]
-        public async Task<IActionResult> GetHealthAlerts([FromQuery] int? elderlyId = null, [FromQuery] bool activeOnly = true)
-        {
-            try
-            {
-                var alerts = await _healthService.GetHealthAlertsAsync(elderlyId, activeOnly);
-                return Ok(new { 
-                    Success = true, 
-                    Data = alerts,
-                    Count = alerts.Count,
-                    ElderlyId = elderlyId,
-                    ActiveOnly = activeOnly,
-                    Timestamp = DateTime.Now
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "获取健康警报失败");
-                return StatusCode(500, new { Success = false, Message = ex.Message });
-            }
-        }
-
-        /// <summary>
         /// 获取老人的最新健康数据
         /// </summary>
         [HttpGet("elderly/{elderlyId}/latest")]
@@ -175,30 +150,6 @@ namespace RoomDeviceManagement.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"获取老人 {elderlyId} 最新健康数据失败");
-                return StatusCode(500, new { Success = false, Message = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// 获取健康趋势分析
-        /// </summary>
-        [HttpGet("elderly/{elderlyId}/trends")]
-        public async Task<IActionResult> GetHealthTrends(int elderlyId, [FromQuery] int days = 30)
-        {
-            try
-            {
-                var trends = await _healthService.GetHealthTrendsAsync(elderlyId, days);
-                return Ok(new { 
-                    Success = true, 
-                    Data = trends,
-                    ElderlyId = elderlyId,
-                    Days = days,
-                    Timestamp = DateTime.Now
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"获取老人 {elderlyId} 健康趋势分析失败");
                 return StatusCode(500, new { Success = false, Message = ex.Message });
             }
         }

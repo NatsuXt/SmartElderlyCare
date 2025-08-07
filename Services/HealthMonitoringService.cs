@@ -193,78 +193,6 @@ namespace RoomDeviceManagement.Services
         }
 
         /// <summary>
-        /// 获取健康异常警报
-        /// </summary>
-        public async Task<List<object>> GetHealthAlertsAsync(int? elderlyId, bool activeOnly)
-        {
-            try
-            {
-                var sql = @"
-                    SELECT 
-                        h.monitoring_id,
-                        h.elderly_id,
-                        h.heart_rate,
-                        h.blood_pressure,
-                        h.oxygen_level,
-                        h.temperature,
-                        h.monitoring_date,
-                        h.status
-                    FROM HealthMonitoring h
-                    WHERE h.status IN ('Abnormal', 'Critical', '异常', '危险')";
-
-                var parameters = new Dictionary<string, object>();
-
-                if (elderlyId.HasValue)
-                {
-                    sql += " AND h.elderly_id = :ElderlyId";
-                    parameters["ElderlyId"] = elderlyId.Value;
-                }
-
-                if (activeOnly)
-                {
-                    sql += " AND h.monitoring_date >= :RecentTime";
-                    parameters["RecentTime"] = DateTime.Now.AddHours(-24);
-                }
-
-                sql += " ORDER BY h.monitoring_date DESC";
-
-                var alerts = await _databaseService.QueryAsync<dynamic>(sql, parameters);
-                
-                return alerts.Select(a => new
-                {
-                    MonitoringId = a.monitoring_id,
-                    ElderlyId = a.elderly_id,
-                    ElderlyName = $"老人{a.elderly_id}", // 临时方案，不依赖ElderlyInfo表
-                    HeartRate = a.heart_rate,
-                    BloodPressure = a.blood_pressure,
-                    OxygenLevel = a.oxygen_level,
-                    MonitoringDate = a.monitoring_date,
-                    Status = a.status,
-                    AlertLevel = GetAlertLevel(a.heart_rate, a.blood_pressure, a.oxygen_level, a.temperature),
-                    Message = GenerateAlertMessage(a.elderly_id, a.status)
-                }).ToList<object>();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "获取健康警报失败");
-                return new List<object>();
-            }
-        }
-
-        private string GetAlertLevel(string heartRate, string bloodPressure, string oxygenLevel, decimal temperature)
-        {
-            if (temperature > 38.5m || temperature < 35.0m) return "紧急";
-            if (!string.IsNullOrEmpty(heartRate) && (int.TryParse(heartRate, out int hr) && (hr > 100 || hr < 60))) return "警告";
-            if (!string.IsNullOrEmpty(oxygenLevel) && (int.TryParse(oxygenLevel, out int ox) && ox < 95)) return "警告";
-            return "注意";
-        }
-
-        private string GenerateAlertMessage(int elderlyId, string status)
-        {
-            return $"老人{elderlyId}出现{status}状况，请及时关注";
-        }
-
-        /// <summary>
         /// 获取最新健康数据
         /// </summary>
         public async Task<HealthMonitoring?> GetLatestHealthDataAsync(int elderlyId)
@@ -279,47 +207,6 @@ namespace RoomDeviceManagement.Services
                 FETCH FIRST 1 ROWS ONLY";
 
             return await _databaseService.QueryFirstOrDefaultAsync<HealthMonitoring>(sql, new { ElderlyId = elderlyId });
-        }
-
-        /// <summary>
-        /// 获取健康趋势分析
-        /// </summary>
-        public async Task<object> GetHealthTrendsAsync(int elderlyId, int days)
-        {
-            var sql = @"
-                SELECT 
-                    TRUNC(monitoring_date) as measurement_date,
-                    AVG(CAST(heart_rate as FLOAT)) as avg_heart_rate,
-                    AVG(CAST(oxygen_level as FLOAT)) as avg_oxygen_level,
-                    AVG(CAST(temperature as FLOAT)) as avg_temperature,
-                    COUNT(*) as record_count
-                FROM HealthMonitoring 
-                WHERE elderly_id = :ElderlyId 
-                  AND monitoring_date >= :StartDate
-                GROUP BY TRUNC(monitoring_date)
-                ORDER BY measurement_date";
-
-            var parameters = new 
-            { 
-                ElderlyId = elderlyId, 
-                StartDate = DateTime.Now.AddDays(-days) 
-            };
-
-            var trends = await _databaseService.QueryAsync<dynamic>(sql, parameters);
-            
-            return new
-            {
-                ElderlyId = elderlyId,
-                Days = days,
-                TrendData = trends.Select(t => new
-                {
-                    Date = t.measurement_date,
-                    AverageHeartRate = t.avg_heart_rate != null ? Math.Round((decimal)t.avg_heart_rate, 1) : 0,
-                    AverageOxygenLevel = t.avg_oxygen_level != null ? Math.Round((decimal)t.avg_oxygen_level, 1) : 0,
-                    AverageTemperature = t.avg_temperature != null ? Math.Round((decimal)t.avg_temperature, 1) : 0,
-                    RecordCount = t.record_count
-                }).ToList()
-            };
         }
 
         /// <summary>

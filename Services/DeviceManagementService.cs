@@ -18,7 +18,7 @@ namespace RoomDeviceManagement.Services
         }
 
         /// <summary>
-        /// �����豸
+        /// 创建设备
         /// </summary>
         public async Task<ApiResponse<DeviceDetailDto>> CreateDeviceAsync(DeviceCreateDto deviceDto)
         {
@@ -45,33 +45,33 @@ namespace RoomDeviceManagement.Services
                 
                 await _databaseService.ExecuteAsync(sql, parameters);
 
-                // ͨ���豸���ƻ�ȡ�´������豸
+                // 通过设备名称获取新创建的设备
                 var createdDevice = await GetDeviceByNameAsync(deviceDto.DeviceName);
                 if (createdDevice.Success)
                 {
-                    createdDevice.Message = "�豸�����ɹ�";
+                    createdDevice.Message = "设备创建成功";
                     return createdDevice;
                 }
 
                 return new ApiResponse<DeviceDetailDto>
                 {
                     Success = false,
-                    Message = "�豸����ʧ��"
+                    Message = "设备创建失败"
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "�����豸ʧ��");
+                _logger.LogError(ex, "创建设备失败");
                 return new ApiResponse<DeviceDetailDto>
                 {
                     Success = false,
-                    Message = $"�����豸ʧ��: {ex.Message}"
+                    Message = $"创建设备失败: {ex.Message}"
                 };
             }
         }
 
         /// <summary>
-        /// �����豸
+        /// 更新设备
         /// </summary>
         public async Task<ApiResponse<DeviceDetailDto>> UpdateDeviceAsync(int deviceId, DeviceUpdateDto deviceDto)
         {
@@ -112,7 +112,7 @@ namespace RoomDeviceManagement.Services
                     return new ApiResponse<DeviceDetailDto>
                     {
                         Success = false,
-                        Message = "û���ṩ��Ҫ���µ��ֶ�"
+                        Message = "没有提供需要更新的字段"
                     };
                 }
 
@@ -124,36 +124,36 @@ namespace RoomDeviceManagement.Services
                     return new ApiResponse<DeviceDetailDto>
                     {
                         Success = false,
-                        Message = "�豸������"
+                        Message = "设备不存在"
                     };
                 }
 
                 var updatedDevice = await GetDeviceByIdAsync(deviceId);
                 if (updatedDevice.Success)
                 {
-                    updatedDevice.Message = "�豸���³ɹ�";
+                    updatedDevice.Message = "设备更新成功";
                     return updatedDevice;
                 }
 
                 return new ApiResponse<DeviceDetailDto>
                 {
                     Success = false,
-                    Message = "���³ɹ�������ȡ�豸��Ϣʧ��"
+                    Message = "更新成功但获取设备信息失败"
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "�����豸ʧ��");
+                _logger.LogError(ex, "更新设备失败");
                 return new ApiResponse<DeviceDetailDto>
                 {
                     Success = false,
-                    Message = $"�����豸ʧ��: {ex.Message}"
+                    Message = $"更新设备失败: {ex.Message}"
                 };
             }
         }
 
         /// <summary>
-        /// ɾ���豸
+        /// 删除设备
         /// </summary>
         public async Task<ApiResponse<bool>> DeleteDeviceAsync(int deviceId)
         {
@@ -167,30 +167,30 @@ namespace RoomDeviceManagement.Services
                     return new ApiResponse<bool>
                     {
                         Success = false,
-                        Message = "�豸������"
+                        Message = "设备不存在"
                     };
                 }
 
                 return new ApiResponse<bool>
                 {
                     Success = true,
-                    Message = "�豸ɾ���ɹ�",
+                    Message = "设备删除成功",
                     Data = true
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "ɾ���豸ʧ��");
+                _logger.LogError(ex, "删除设备失败");
                 return new ApiResponse<bool>
                 {
                     Success = false,
-                    Message = $"ɾ���豸ʧ��: {ex.Message}"
+                    Message = $"删除设备失败: {ex.Message}"
                 };
             }
         }
 
         /// <summary>
-        /// ��ȡ�豸�б�
+        /// 获取设备列表
         /// </summary>
         public async Task<ApiResponse<List<DeviceDetailDto>>> GetDevicesAsync(PagedRequest request)
         {
@@ -244,23 +244,23 @@ namespace RoomDeviceManagement.Services
                 return new ApiResponse<List<DeviceDetailDto>>
                 {
                     Success = true,
-                    Message = "��ȡ�豸�б��ɹ�",
+                    Message = "获取设备列表成功",
                     Data = deviceList
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "��ȡ�豸�б�ʧ��");
+                _logger.LogError(ex, "获取设备列表失败");
                 return new ApiResponse<List<DeviceDetailDto>>
                 {
                     Success = false,
-                    Message = $"��ȡ�豸�б�ʧ��: {ex.Message}"
+                    Message = $"获取设备列表失败: {ex.Message}"
                 };
             }
         }
 
         /// <summary>
-        /// ����ID��ȡ�豸����
+        /// 根据ID获取设备详情
         /// </summary>
         public async Task<ApiResponse<DeviceDetailDto>> GetDeviceByIdAsync(int deviceId)
         {
@@ -292,7 +292,7 @@ namespace RoomDeviceManagement.Services
                     return new ApiResponse<DeviceDetailDto>
                     {
                         Success = true,
-                        Message = "��ȡ�豸����ɹ�",
+                        Message = "获取设备详情成功",
                         Data = deviceDetail
                     };
                 }
@@ -300,22 +300,22 @@ namespace RoomDeviceManagement.Services
                 return new ApiResponse<DeviceDetailDto>
                 {
                     Success = false,
-                    Message = "�豸������"
+                    Message = "设备不存在"
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "��ȡ�豸����ʧ��");
+                _logger.LogError(ex, "获取设备详情失败");
                 return new ApiResponse<DeviceDetailDto>
                 {
                     Success = false,
-                    Message = $"��ȡ�豸����ʧ��: {ex.Message}"
+                    Message = $"获取设备详情失败: {ex.Message}"
                 };
             }
         }
 
         /// <summary>
-        /// �����豸���ƻ�ȡ�豸
+        /// 根据设备名称获取设备
         /// </summary>
         private async Task<ApiResponse<DeviceDetailDto>> GetDeviceByNameAsync(string deviceName)
         {
@@ -347,7 +347,7 @@ namespace RoomDeviceManagement.Services
                     return new ApiResponse<DeviceDetailDto>
                     {
                         Success = true,
-                        Message = "��ȡ�豸�ɹ�",
+                        Message = "获取设备成功",
                         Data = deviceDetail
                     };
                 }
@@ -355,16 +355,70 @@ namespace RoomDeviceManagement.Services
                 return new ApiResponse<DeviceDetailDto>
                 {
                     Success = false,
-                    Message = "�豸������"
+                    Message = "设备不存在"
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "�����豸���ƻ�ȡ�豸ʧ��");
+                _logger.LogError(ex, "根据设备名称获取设备失败");
                 return new ApiResponse<DeviceDetailDto>
                 {
                     Success = false,
-                    Message = $"��ȡ�豸ʧ��: {ex.Message}"
+                    Message = $"获取设备失败: {ex.Message}"
+                };
+            }
+        }
+
+        /// <summary>
+        /// 获取设备统计信息
+        /// </summary>
+        public async Task<ApiResponse<object>> GetDeviceStatisticsAsync()
+        {
+            try
+            {
+                var statisticsSql = @"
+                    SELECT 
+                        COUNT(*) as total_devices,
+                        SUM(CASE WHEN UPPER(status) = '正常' OR UPPER(status) = 'NORMAL' THEN 1 ELSE 0 END) as normal_devices,
+                        SUM(CASE WHEN UPPER(status) = '故障' OR UPPER(status) = 'ERROR' OR UPPER(status) = 'FAULT' THEN 1 ELSE 0 END) as fault_devices,
+                        SUM(CASE WHEN UPPER(status) = '维护中' OR UPPER(status) = 'MAINTENANCE' THEN 1 ELSE 0 END) as maintenance_devices
+                    FROM DeviceStatus";
+
+                var typeDistributionSql = @"
+                    SELECT device_type, COUNT(*) as count
+                    FROM DeviceStatus
+                    GROUP BY device_type
+                    ORDER BY count DESC";
+
+                var statistics = await _databaseService.QueryFirstOrDefaultAsync<dynamic>(statisticsSql);
+                var typeDistribution = await _databaseService.QueryAsync<dynamic>(typeDistributionSql);
+
+                var result = new
+                {
+                    总设备数 = statistics?.total_devices ?? 0,
+                    正常设备 = statistics?.normal_devices ?? 0,
+                    故障设备 = statistics?.fault_devices ?? 0,
+                    维护中设备 = statistics?.maintenance_devices ?? 0,
+                    设备类型分布 = typeDistribution?.Select(t => new { 
+                        设备类型 = t.device_type, 
+                        数量 = t.count 
+                    }).ToList()
+                };
+
+                return new ApiResponse<object>
+                {
+                    Success = true,
+                    Message = "获取设备统计信息成功",
+                    Data = result
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "获取设备统计信息失败");
+                return new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = $"获取设备统计信息失败: {ex.Message}"
                 };
             }
         }

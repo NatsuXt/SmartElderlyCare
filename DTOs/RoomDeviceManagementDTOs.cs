@@ -7,11 +7,11 @@ namespace RoomDeviceManagement.DTOs
     {
         [Required]
         [MaxLength(20)]
-        public string RoomNumber { get; set; }
+        public string RoomNumber { get; set; } = string.Empty;
         
         [Required]
         [MaxLength(50)]
-        public string RoomType { get; set; }
+        public string RoomType { get; set; } = string.Empty;
         
         [Required]
         [Range(1, 10)]
@@ -19,10 +19,19 @@ namespace RoomDeviceManagement.DTOs
         
         [Required]
         [MaxLength(20)]
-        public string Status { get; set; }
+        public string Status { get; set; } = string.Empty;
         
-        [MaxLength(500)]
-        public string? Description { get; set; }
+        [Required]
+        [Range(0, 99999)]
+        public decimal Rate { get; set; }
+        
+        [Required]
+        [MaxLength(50)]
+        public string BedType { get; set; } = string.Empty;
+        
+        [Required]
+        [Range(1, 50)]
+        public int Floor { get; set; }
     }
 
     public class RoomUpdateDto
@@ -39,8 +48,14 @@ namespace RoomDeviceManagement.DTOs
         [MaxLength(20)]
         public string? Status { get; set; }
         
-        [MaxLength(500)]
-        public string? Description { get; set; }
+        [Range(0, 99999)]
+        public decimal? Rate { get; set; }
+        
+        [MaxLength(50)]
+        public string? BedType { get; set; }
+        
+        [Range(1, 50)]
+        public int? Floor { get; set; }
     }
 
     // ======== 设备状态 DTOs ========
@@ -218,6 +233,9 @@ namespace RoomDeviceManagement.DTOs
         public string RoomType { get; set; }
         public int Capacity { get; set; }
         public string Status { get; set; }
+        public decimal Rate { get; set; }
+        public string BedType { get; set; }
+        public int Floor { get; set; }
         public string? Description { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
