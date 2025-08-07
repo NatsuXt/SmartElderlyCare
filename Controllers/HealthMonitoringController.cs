@@ -6,10 +6,11 @@ using RoomDeviceManagement.DTOs;
 namespace RoomDeviceManagement.Controllers
 {
     /// <summary>
-    /// 健康监测 API 控制器
+    /// 实时健康数据监控 API 控制器
+    /// 功能：IoT设备健康数据上报、解析、存储、异常检测、警报通知
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/health-monitoring")]
     public class HealthMonitoringController : ControllerBase
     {
         private readonly HealthMonitoringService _healthService;
@@ -22,7 +23,8 @@ namespace RoomDeviceManagement.Controllers
         }
 
         /// <summary>
-        /// 健康监测数据上报接口
+        /// IoT健康监测设备数据上报接口（核心业务接口）
+        /// 处理智能手环等设备采集的心率、血压、血氧、体温数据
         /// </summary>
         [HttpPost("data-report")]
         public async Task<IActionResult> ReportHealthData([FromBody] HealthDataReportDto healthReport)
@@ -45,6 +47,34 @@ namespace RoomDeviceManagement.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "健康数据上报处理失败");
+                return StatusCode(500, new { Success = false, Message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// 批量健康数据上报（支持IoT网关批量传输）
+        /// </summary>
+        [HttpPost("batch-data-report")]
+        public async Task<IActionResult> ReportBatchHealthData([FromBody] List<HealthDataReportDto> healthReports)
+        {
+            try
+            {
+                if (!ModelState.IsValid || !healthReports.Any())
+                {
+                    return BadRequest("无效的健康数据批次");
+                }
+
+                var result = await _healthService.HandleBatchHealthDataAsync(healthReports);
+                return Ok(new { 
+                    Success = true, 
+                    Message = "批量健康数据处理完成", 
+                    Data = result,
+                    Timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "批量健康数据处理失败");
                 return StatusCode(500, new { Success = false, Message = ex.Message });
             }
         }
@@ -169,35 +199,6 @@ namespace RoomDeviceManagement.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"获取老人 {elderlyId} 健康趋势分析失败");
-                return StatusCode(500, new { Success = false, Message = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// 批量上报健康数据
-        /// </summary>
-        [HttpPost("batch-report")]
-        public async Task<IActionResult> BatchReportHealthData([FromBody] List<HealthDataReportDto> healthReports)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ModelState);
-                }
-
-                var result = await _healthService.HandleBatchHealthDataAsync(healthReports);
-                return Ok(new { 
-                    Success = true, 
-                    Message = $"批量健康数据上报处理成功，共处理 {healthReports.Count} 条数据", 
-                    Data = result,
-                    Count = healthReports.Count,
-                    Timestamp = DateTime.Now
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "批量健康数据上报处理失败");
                 return StatusCode(500, new { Success = false, Message = ex.Message });
             }
         }

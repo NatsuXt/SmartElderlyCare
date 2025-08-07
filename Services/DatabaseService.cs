@@ -2,6 +2,7 @@ using System;
 using System.Data;
 using Oracle.ManagedDataAccess.Client;
 using System.Reflection;
+using Microsoft.Extensions.Configuration;
 
 namespace RoomDeviceManagement.Services
 {
@@ -12,10 +13,11 @@ namespace RoomDeviceManagement.Services
     {
         private readonly string _connectionString;
 
-        public DatabaseService()
+        public DatabaseService(IConfiguration configuration)
         {
-            // Oracle 18c 连接字符串配置
-            _connectionString = "Data Source=47.96.238.102:1521/orcl;User Id=FIBRE;Password=FIBRE2025;";
+            // 从配置文件读取连接字符串
+            _connectionString = configuration.GetConnectionString("DefaultConnection") 
+                ?? throw new InvalidOperationException("数据库连接字符串未配置");
         }
 
         public DatabaseService(string connectionString)
@@ -131,6 +133,34 @@ namespace RoomDeviceManagement.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"异步查询单个结果失败：{ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 异步查询第一个结果或默认值
+        /// </summary>
+        public async Task<T?> QueryFirstOrDefaultAsync<T>(string sql, object? parameters = null) where T : new()
+        {
+            try
+            {
+                using var connection = GetConnection();
+                await connection.OpenAsync();
+                
+                using var command = new OracleCommand(sql, connection);
+                
+                if (parameters != null)
+                {
+                    AddParameters(command, parameters);
+                }
+                
+                using var reader = await command.ExecuteReaderAsync();
+                var results = MapResults<T>(reader);
+                return results.FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"异步查询第一个结果失败：{ex.Message}");
                 throw;
             }
         }

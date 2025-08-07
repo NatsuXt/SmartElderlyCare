@@ -1,4 +1,5 @@
 using RoomDeviceManagement.Services;
+using RoomDeviceManagement;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,16 +10,17 @@ builder.Services.AddSwaggerGen();
 
 // 注册服务
 builder.Services.AddScoped<DatabaseService>();
-builder.Services.AddScoped<DeviceMonitoringService>();
 builder.Services.AddScoped<ElectronicFenceService>();
 builder.Services.AddScoped<HealthMonitoringService>();
+builder.Services.AddScoped<IoTMonitoringService>();
+
+// 注册后台服务
+builder.Services.AddHostedService<DeviceMonitoringBackgroundService>();
 
 // 注册数据管理相关服务
 builder.Services.AddScoped<RoomManagementService>();
 builder.Services.AddScoped<DeviceManagementService>();
-builder.Services.AddScoped<FenceManagementService>();
-builder.Services.AddScoped<FenceLogService>();
-builder.Services.AddScoped<HealthDataService>();
+// FenceManagementService 和 FenceLogService 已合并到 ElectronicFenceService
 
 // 添加CORS支持
 builder.Services.AddCors(options =>
@@ -39,28 +41,58 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseCors();
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // 暂时禁用HTTPS重定向便于测试
 app.UseAuthorization();
 app.MapControllers();
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 Console.WriteLine("===========================================");
-Console.WriteLine("智慧养老系统 - IoT监控平台 API 服务");
+Console.WriteLine("智慧养老系统 - 房间与设备管理模块");
 Console.WriteLine("===========================================");
 Console.WriteLine();
 
-// 测试数据库连接
-var dbService = new DatabaseService();
-Console.WriteLine("🔗 测试数据库连接...");
-if (dbService.TestConnection())
+// 检查启动参数
+if (args.Length > 0 && args[0] == "--test-db")
 {
-    Console.WriteLine("✅ 数据库连接成功！");
-    Console.WriteLine($"📡 连接服务器：47.96.238.102:1521/orcl");
-    Console.WriteLine($"👤 用户名：FIBRE");
+    // 运行数据库调试测试
+    DatabaseDebugger.TestMultipleConnections();
+    return;
 }
-else
+if (args.Length > 0 && args[0] == "--debug-db")
 {
-    Console.WriteLine("❌ 数据库连接失败！");
+    // 运行数据库调试
+    await DatabaseDebugger.TestNetworkConnection();
+    DatabaseDebugger.TestMultipleConnections();
+    return;
+}
+
+// 测试数据库连接
+Console.WriteLine("🔗 测试数据库连接...");
+try
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (string.IsNullOrEmpty(connectionString))
+    {
+        Console.WriteLine("❌ 数据库连接字符串未配置！");
+    }
+    else
+    {
+        var dbService = new DatabaseService(connectionString);
+        if (dbService.TestConnection())
+        {
+            Console.WriteLine("✅ 数据库连接成功！");
+            Console.WriteLine($"📡 连接服务器：47.96.238.102:1521/orcl");
+            Console.WriteLine($"👤 用户名：application_user");
+        }
+        else
+        {
+            Console.WriteLine("❌ 数据库连接失败！");
+        }
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"❌ 数据库连接失败！错误: {ex.Message}");
 }
 
 Console.WriteLine();

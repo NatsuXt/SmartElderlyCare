@@ -1,6 +1,6 @@
 using RoomDeviceManagement.Models;
 using RoomDeviceManagement.Services;
-using RoomDeviceManagement.Controllers;
+using RoomDeviceManagement.DTOs;
 using System.Text.Json;
 
 namespace RoomDeviceManagement.Services
@@ -216,51 +216,6 @@ namespace RoomDeviceManagement.Services
         }
 
         /// <summary>
-        /// 获取监控仪表板数据
-        /// </summary>
-        public async Task<object> GetMonitoringDashboardAsync()
-        {
-            try
-            {
-                // 设备状态统计
-                string deviceStatsSql = @"
-                    SELECT status, COUNT(*) as count 
-                    FROM DeviceStatus 
-                    GROUP BY status";
-                var deviceStats = await _dbService.QueryAsync<dynamic>(deviceStatsSql);
-
-                // 今日健康监测统计
-                string healthStatsSql = @"
-                    SELECT status, COUNT(*) as count 
-                    FROM HealthMonitoring 
-                    WHERE DATE(monitoring_date) = DATE(CURRENT_TIMESTAMP)
-                    GROUP BY status";
-                var healthStats = await _dbService.QueryAsync<dynamic>(healthStatsSql);
-
-                // 今日围栏异常统计
-                string fenceStatsSql = @"
-                    SELECT COUNT(*) as count 
-                    FROM FenceLog 
-                    WHERE DATE(entry_time) = DATE(CURRENT_TIMESTAMP)
-                    AND exit_time IS NULL";
-                var fenceAlerts = await _dbService.QueryFirstAsync<dynamic>(fenceStatsSql);
-
-                return new
-                {
-                    DeviceStatus = deviceStats,
-                    HealthStatus = healthStats,
-                    FenceAlerts = fenceAlerts?.count ?? 0,
-                    LastUpdated = DateTime.Now
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "获取监控仪表板数据失败");
-                throw;
-            }
-        }
-
-        /// <summary>
         /// 获取活跃警报列表
         /// </summary>
         public async Task<List<object>> GetActiveAlertsAsync()
@@ -273,7 +228,7 @@ namespace RoomDeviceManagement.Services
                 string faultDevicesSql = @"
                     SELECT device_id, device_name, device_type, status, location
                     FROM DeviceStatus 
-                    WHERE status = '故障'";
+                    WHERE status IN ('故障', '异常', 'ERROR')";
                 var faultDevices = await _dbService.QueryAsync<DeviceStatus>(faultDevicesSql);
 
                 foreach (var device in faultDevices)
@@ -289,14 +244,34 @@ namespace RoomDeviceManagement.Services
                     });
                 }
 
-                // 围栏异常警报
+                // 健康异常警报
+                string healthAlertsSql = @"
+                    SELECT elderly_id, heart_rate, blood_pressure, oxygen_level, temperature, monitoring_date, status
+                    FROM HealthMonitoring 
+                    WHERE status IN ('Abnormal', 'Critical', '异常', '危险')
+                    AND monitoring_date >= :RecentTime";
+                var healthAlerts = await _dbService.QueryAsync<dynamic>(healthAlertsSql, new { RecentTime = DateTime.Now.AddHours(-2) });
+
+                foreach (var health in healthAlerts)
+                {
+                    alerts.Add(new
+                    {
+                        Type = "健康异常",
+                        Title = $"健康监测警报",
+                        Message = $"老人{health.elderly_id}出现{health.status}状况，请及时关注",
+                        ElderlyId = health.elderly_id,
+                        Severity = health.status == "Critical" || health.status == "危险" ? "紧急" : "警告",
+                        Time = health.monitoring_date
+                    });
+                }
+
+                // 围栏异常警报（简化版，不依赖ElderlyInfo表）
                 string fenceAlertsSql = @"
-                    SELECT fl.elderly_id, fl.entry_time, ei.name
+                    SELECT fl.elderly_id, fl.entry_time, fl.event_type
                     FROM FenceLog fl
-                    JOIN ElderlyInfo ei ON fl.elderly_id = ei.elderly_id
                     WHERE fl.exit_time IS NULL 
-                    AND fl.entry_time >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 HOUR)";
-                var fenceAlerts = await _dbService.QueryAsync<dynamic>(fenceAlertsSql);
+                    AND fl.entry_time >= :RecentTime";
+                var fenceAlerts = await _dbService.QueryAsync<dynamic>(fenceAlertsSql, new { RecentTime = DateTime.Now.AddHours(-1) });
 
                 foreach (var alert in fenceAlerts)
                 {
@@ -304,33 +279,10 @@ namespace RoomDeviceManagement.Services
                     {
                         Type = "围栏异常",
                         Title = "电子围栏警报",
-                        Message = $"老人 {alert.name} 超出安全区域",
+                        Message = $"老人{alert.elderly_id}超出安全区域",
                         ElderlyId = alert.elderly_id,
                         Severity = "紧急",
                         Time = alert.entry_time
-                    });
-                }
-
-                // 健康异常警报
-                string healthAlertsSql = @"
-                    SELECT hm.elderly_id, hm.monitoring_date, hm.status, ei.name
-                    FROM HealthMonitoring hm
-                    JOIN ElderlyInfo ei ON hm.elderly_id = ei.elderly_id
-                    WHERE hm.status = '异常' 
-                    AND hm.monitoring_date >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 2 HOUR)
-                    ORDER BY hm.monitoring_date DESC";
-                var healthAlerts = await _dbService.QueryAsync<dynamic>(healthAlertsSql);
-
-                foreach (var alert in healthAlerts)
-                {
-                    alerts.Add(new
-                    {
-                        Type = "健康异常",
-                        Title = "健康监测警报",
-                        Message = $"老人 {alert.name} 健康指标异常",
-                        ElderlyId = alert.elderly_id,
-                        Severity = "中",
-                        Time = alert.monitoring_date
                     });
                 }
 
@@ -338,8 +290,8 @@ namespace RoomDeviceManagement.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "获取活跃警报列表失败");
-                throw;
+                _logger.LogError(ex, "获取活跃警报失败");
+                return new List<object>();
             }
         }
 
@@ -353,18 +305,18 @@ namespace RoomDeviceManagement.Services
             try
             {
                 string staffSql = @"
-                    SELECT staff_id, name, contact_phone, email 
-                    FROM StaffInfo 
-                    WHERE position = '维修人员'";
+                    SELECT STAFF_ID, NAME, CONTACT_PHONE, EMAIL 
+                    FROM STAFFINFO 
+                    WHERE POSITION = '维修人员'";
                 
-                var maintenanceStaff = await _dbService.QueryAsync<StaffInfo>(staffSql);
+                var maintenanceStaff = await _dbService.QueryAsync<STAFFINFO>(staffSql);
 
                 foreach (var staff in maintenanceStaff)
                 {
                     foreach (var device in faultDevices)
                     {
                         // 这里可以集成实际的通知服务（短信、邮件、推送等）
-                        _logger.LogInformation($"通知维修人员 {staff.Name}({staff.ContactPhone}): 设备 {device.DeviceName} 故障");
+                        _logger.LogInformation($"通知维修人员 {staff.NAME}({staff.CONTACT_PHONE}): 设备 {device.DeviceName} 故障");
                     }
                 }
             }
@@ -411,16 +363,16 @@ namespace RoomDeviceManagement.Services
             try
             {
                 string nurseSql = @"
-                    SELECT staff_id, name, contact_phone, email 
-                    FROM StaffInfo 
-                    WHERE position LIKE '%护理%' 
+                    SELECT STAFF_ID, NAME, CONTACT_PHONE, EMAIL 
+                    FROM STAFFINFO 
+                    WHERE POSITION LIKE '%护理%' 
                     LIMIT 1";
                 
-                var nurse = await _dbService.QueryFirstAsync<StaffInfo>(nurseSql);
+                var nurse = await _dbService.QueryFirstAsync<STAFFINFO>(nurseSql);
                 
                 if (nurse != null)
                 {
-                    _logger.LogInformation($"通知护理人员 {nurse.Name}({nurse.ContactPhone}): 老人 {elderlyId} 超出安全区域");
+                    _logger.LogInformation($"通知护理人员 {nurse.NAME}({nurse.CONTACT_PHONE}): 老人 {elderlyId} 超出安全区域");
                 }
             }
             catch (Exception ex)
@@ -455,20 +407,145 @@ namespace RoomDeviceManagement.Services
             try
             {
                 string nurseSql = @"
-                    SELECT staff_id, name, contact_phone, email 
-                    FROM StaffInfo 
-                    WHERE position LIKE '%护理%' OR position LIKE '%医生%'";
+                    SELECT STAFF_ID, NAME, CONTACT_PHONE, EMAIL 
+                    FROM STAFFINFO 
+                    WHERE POSITION LIKE '%护理%' OR POSITION LIKE '%医生%'";
                 
-                var medicalStaff = await _dbService.QueryAsync<StaffInfo>(nurseSql);
+                var medicalStaff = await _dbService.QueryAsync<STAFFINFO>(nurseSql);
 
                 foreach (var staff in medicalStaff)
                 {
-                    _logger.LogInformation($"发送健康警报给 {staff.Name}({staff.ContactPhone}): 老人 {elderlyId} 健康指标异常");
+                    _logger.LogInformation($"发送健康警报给 {staff.NAME}({staff.CONTACT_PHONE}): 老人 {elderlyId} 健康指标异常");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "发送健康警报失败");
+            }
+        }
+
+        /// <summary>
+        /// 根据设备ID获取设备状态
+        /// </summary>
+        public async Task<DeviceStatus?> GetDeviceStatusByIdAsync(int deviceId)
+        {
+            try
+            {
+                var sql = @"
+                    SELECT device_id, device_name, device_type, status, 
+                           installation_date, last_maintenance_date, location
+                    FROM DeviceStatus 
+                    WHERE device_id = :DeviceId";
+
+                return await _dbService.QueryFirstOrDefaultAsync<DeviceStatus>(sql, new { DeviceId = deviceId });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"获取设备状态失败: {deviceId}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 获取老人健康历史数据
+        /// </summary>
+        public async Task<List<HealthMonitoring>> GetElderlyHealthHistoryAsync(int elderlyId, int days = 7)
+        {
+            try
+            {
+                var sql = @"
+                    SELECT monitoring_id, elderly_id, heart_rate, blood_pressure, 
+                           oxygen_level, temperature, measurement_time, alerts
+                    FROM HealthMonitoring 
+                    WHERE elderly_id = :ElderlyId 
+                    AND measurement_time >= :StartDate
+                    ORDER BY measurement_time DESC";
+
+                var startDate = DateTime.Now.AddDays(-days);
+                return (await _dbService.QueryAsync<HealthMonitoring>(sql, new { ElderlyId = elderlyId, StartDate = startDate })).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"获取老人健康历史失败: {elderlyId}");
+                return new List<HealthMonitoring>();
+            }
+        }
+
+        /// <summary>
+        /// 获取围栏日志
+        /// </summary>
+        public async Task<List<FenceLog>> GetFenceLogsAsync(int elderlyId, int hours = 24)
+        {
+            try
+            {
+                var sql = @"
+                    SELECT log_id, elderly_id, fence_id, event_type, 
+                           event_time, latitude, longitude, description
+                    FROM FenceLog 
+                    WHERE elderly_id = :ElderlyId 
+                    AND event_time >= :StartTime
+                    ORDER BY event_time DESC";
+
+                var startTime = DateTime.Now.AddHours(-hours);
+                return (await _dbService.QueryAsync<FenceLog>(sql, new { ElderlyId = elderlyId, StartTime = startTime })).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"获取围栏日志失败: {elderlyId}");
+                return new List<FenceLog>();
+            }
+        }
+
+        /// <summary>
+        /// 获取老人位置状态
+        /// </summary>
+        public async Task<object> GetElderlyLocationStatusAsync()
+        {
+            try
+            {
+                var sql = @"
+                    SELECT e.ELDERLY_ID, e.NAME, sl.LATITUDE, sl.LONGITUDE, 
+                           sl.LOCATION_TIME, r.ROOM_NUMBER
+                    FROM ElderlyInfo e
+                    LEFT JOIN STAFFLOCATION sl ON e.ROOM_ID = sl.ROOM_ID
+                    LEFT JOIN RoomManagement r ON e.ROOM_ID = r.ROOM_ID
+                    ORDER BY e.ELDERLY_ID";
+
+                var locations = await _dbService.QueryAsync<dynamic>(sql);
+                return locations;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "获取老人位置状态失败");
+                return new { };
+            }
+        }
+
+        /// <summary>
+        /// 同步所有设备状态
+        /// </summary>
+        public async Task<object> SyncAllDeviceStatusAsync()
+        {
+            try
+            {
+                var sql = @"
+                    UPDATE DeviceStatus 
+                    SET last_maintenance_date = :CurrentTime
+                    WHERE status = '正常'";
+
+                var affectedRows = await _dbService.ExecuteAsync(sql, new { CurrentTime = DateTime.Now });
+
+                return new
+                {
+                    Message = "设备状态同步完成",
+                    UpdatedDevices = affectedRows,
+                    SyncTime = DateTime.Now
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "同步设备状态失败");
+                return new { Message = "同步失败", Error = ex.Message };
             }
         }
     }

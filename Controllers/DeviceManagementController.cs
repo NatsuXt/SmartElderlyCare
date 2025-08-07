@@ -25,7 +25,7 @@ namespace RoomDeviceManagement.Controllers
         /// <param name="search">搜索关键词（设备名称或设备类型）</param>
         /// <param name="sortBy">排序字段（deviceName, deviceType, status, installationDate）</param>
         /// <param name="sortDesc">是否降序排列</param>
-        [HttpGet]
+        [HttpGet("devices")]
         public async Task<ActionResult<ApiResponse<List<DeviceDetailDto>>>> GetDevices(
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20,
@@ -33,17 +33,33 @@ namespace RoomDeviceManagement.Controllers
             [FromQuery] string? sortBy = null,
             [FromQuery] bool sortDesc = false)
         {
-            var request = new PagedRequest
+            try
             {
-                Page = page,
-                PageSize = Math.Min(pageSize, 100),
-                Search = search,
-                SortBy = sortBy,
-                SortDesc = sortDesc
-            };
+                // 参数验证
+                if (page < 1) page = 1;
+                if (pageSize < 1 || pageSize > 100) pageSize = 20;
 
-            var result = await _deviceManagementService.GetDevicesAsync(request);
-            return result.Success ? Ok(result) : BadRequest(result);
+                var request = new PagedRequest
+                {
+                    Page = page,
+                    PageSize = pageSize,
+                    Search = search,
+                    SortBy = sortBy,
+                    SortDesc = sortDesc
+                };
+
+                var result = await _deviceManagementService.GetDevicesAsync(request);
+                return result.Success ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "获取设备列表失败");
+                return StatusCode(500, new ApiResponse<List<DeviceDetailDto>>
+                {
+                    Success = false,
+                    Message = "获取设备列表失败：" + ex.Message
+                });
+            }
         }
 
         /// <summary>

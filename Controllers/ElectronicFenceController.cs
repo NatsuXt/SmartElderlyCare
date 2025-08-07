@@ -178,5 +178,135 @@ namespace RoomDeviceManagement.Controllers
                 return StatusCode(500, new { Success = false, Message = ex.Message });
             }
         }
+
+        /// <summary>
+        /// 创建或更新围栏配置
+        /// </summary>
+        [HttpPost("config")]
+        public async Task<IActionResult> CreateOrUpdateFenceConfig([FromBody] FenceConfigDto fenceConfig)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var result = await _fenceService.CreateOrUpdateFenceConfigAsync(fenceConfig);
+                return Ok(new { 
+                    Success = true, 
+                    Message = "围栏配置保存成功", 
+                    Data = result,
+                    Timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "保存围栏配置失败");
+                return StatusCode(500, new { Success = false, Message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// 删除围栏配置
+        /// </summary>
+        [HttpDelete("config/{fenceId}")]
+        public async Task<IActionResult> DeleteFenceConfig(int fenceId)
+        {
+            try
+            {
+                var result = await _fenceService.DeleteFenceConfigAsync(fenceId);
+                return Ok(new { 
+                    Success = true, 
+                    Message = "围栏配置删除成功", 
+                    Data = result,
+                    Timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"删除围栏配置失败: FenceId {fenceId}");
+                return StatusCode(500, new { Success = false, Message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// 获取护理人员位置信息
+        /// </summary>
+        [HttpGet("staff-locations")]
+        public async Task<IActionResult> GetStaffLocations()
+        {
+            try
+            {
+                var staffLocations = await _fenceService.GetStaffLocationsAsync();
+                return Ok(new { 
+                    Success = true, 
+                    Data = staffLocations,
+                    Timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "获取护理人员位置失败");
+                return StatusCode(500, new { Success = false, Message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// 更新护理人员位置
+        /// </summary>
+        [HttpPost("staff-location")]
+        public async Task<IActionResult> UpdateStaffLocation([FromBody] StaffLocationUpdateDto locationUpdate)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var result = await _fenceService.UpdateStaffLocationAsync(locationUpdate);
+                return Ok(new { 
+                    Success = true, 
+                    Message = "护理人员位置更新成功", 
+                    Data = result,
+                    Timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "更新护理人员位置失败");
+                return StatusCode(500, new { Success = false, Message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// 测试围栏检查功能
+        /// </summary>
+        [HttpPost("test-fence")]
+        public async Task<IActionResult> TestFenceCheck([FromBody] FenceTestDto testData)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var result = await _fenceService.TestFenceCheckAsync(testData.Latitude, testData.Longitude);
+                return Ok(new { 
+                    Success = true, 
+                    Message = "围栏检查测试完成", 
+                    Data = result,
+                    TestLocation = new { testData.Latitude, testData.Longitude },
+                    Timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "围栏检查测试失败");
+                return StatusCode(500, new { Success = false, Message = ex.Message });
+            }
+        }
     }
 }

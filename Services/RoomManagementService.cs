@@ -36,8 +36,7 @@ namespace RoomDeviceManagement.Services
 
                 var sql = $@"
                     SELECT * FROM (
-                        SELECT room_id, room_number, room_type, capacity, status, description, 
-                               created_at, updated_at,
+                        SELECT room_id, room_number, room_type, capacity, status,
                                ROW_NUMBER() OVER ({orderClause}) as rn
                         FROM RoomManagement 
                         {whereClause}
@@ -45,26 +44,36 @@ namespace RoomDeviceManagement.Services
 
                 var countSql = $@"SELECT COUNT(*) FROM RoomManagement {whereClause}";
 
-                var parameters = new { search = request.Search, offset = offset, endRow = offset + request.PageSize };
+                object parameters;
+                object countParameters;
+                if (string.IsNullOrEmpty(request.Search))
+                {
+                    parameters = new { offset = offset, endRow = offset + request.PageSize };
+                    countParameters = new { };
+                }
+                else
+                {
+                    parameters = new { search = request.Search, offset = offset, endRow = offset + request.PageSize };
+                    countParameters = new { search = request.Search };
+                }
                 
                 // 获取总数
-                var totalCountResult = await _databaseService.QueryAsync<dynamic>(countSql, 
-                    string.IsNullOrEmpty(request.Search) ? null : new { search = request.Search });
+                var totalCountResult = await _databaseService.QueryAsync<dynamic>(countSql, countParameters);
                 var totalCount = Convert.ToInt32(totalCountResult.First().GetType().GetProperty("COUNT(*)")?.GetValue(totalCountResult.First()));
 
                 // 获取数据
-                var rooms = await _databaseService.QueryAsync<dynamic>(sql, parameters);
+                var rooms = await _databaseService.QueryAsync<RoomManagement>(sql, parameters);
                 
                 var roomList = rooms.Select(r => new RoomDetailDto
                 {
-                    RoomId = Convert.ToInt32(r.ROOM_ID),
-                    RoomNumber = r.ROOM_NUMBER?.ToString() ?? "",
-                    RoomType = r.ROOM_TYPE?.ToString() ?? "",
-                    Capacity = Convert.ToInt32(r.CAPACITY),
-                    Status = r.STATUS?.ToString() ?? "",
-                    Description = r.DESCRIPTION?.ToString(),
-                    CreatedAt = Convert.ToDateTime(r.CREATED_AT),
-                    UpdatedAt = Convert.ToDateTime(r.UPDATED_AT)
+                    RoomId = r.RoomId,
+                    RoomNumber = r.RoomNumber,
+                    RoomType = r.RoomType,
+                    Capacity = r.Capacity,
+                    Status = r.Status,
+                    Description = null, // Field not available in current database schema
+                    CreatedAt = DateTime.Now,   // Field not available in current database schema
+                    UpdatedAt = DateTime.Now    // Field not available in current database schema
                 }).ToList();
 
                 return new ApiResponse<List<RoomDetailDto>>

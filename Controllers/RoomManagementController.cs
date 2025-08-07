@@ -28,22 +28,38 @@ namespace RoomDeviceManagement.Controllers
             [FromQuery] string? sortBy = null,
             [FromQuery] bool sortDesc = false)
         {
-            var request = new PagedRequest
+            try
             {
-                Page = page,
-                PageSize = pageSize,
-                Search = search,
-                SortBy = sortBy,
-                SortDesc = sortDesc
-            };
+                // 参数验证
+                if (page < 1) page = 1;
+                if (pageSize < 1 || pageSize > 100) pageSize = 20;
 
-            var result = await _roomManagementService.GetRoomsAsync(request);
-            
-            if (result.Success)
-            {
-                return Ok(result);
+                var request = new PagedRequest
+                {
+                    Page = page,
+                    PageSize = pageSize,
+                    Search = search,
+                    SortBy = sortBy,
+                    SortDesc = sortDesc
+                };
+
+                var result = await _roomManagementService.GetRoomsAsync(request);
+                
+                if (result.Success)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
             }
-            return BadRequest(result);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "获取房间列表失败");
+                return StatusCode(500, new ApiResponse<List<RoomDetailDto>>
+                {
+                    Success = false,
+                    Message = "获取房间列表失败：" + ex.Message
+                });
+            }
         }
 
         /// <summary>

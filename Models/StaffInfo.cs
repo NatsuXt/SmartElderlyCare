@@ -1,22 +1,20 @@
-// StaffInfo.cs
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace RoomDeviceManagement.Models
+namespace RoomDeviceManagement.Models;
+
+public class STAFFINFO
 {
-    public class StaffInfo
-    {
-        [Key]public int StaffId { get; set; }
-        public string Name { get; set; }
-        public string Gender { get; set; }
-        public string Position { get; set; }
-        public string ContactPhone { get; set; }
-        public string Email { get; set; }
-        public DateTime HireDate { get; set; }
-        public decimal Salary { get; set; }
-        public string SkillLevel { get; set; }
-        public string WorkSchedule { get; set; }
-        
-        // Navigation properties
-    }
+    [Key]public decimal STAFF_ID { get; set; }
+    public string NAME { get; set; } = "";
+    public string GENDER { get; set; } = "";
+    public string POSITION { get; set; } = "";
+    public string CONTACT_PHONE { get; set; } = "";
+    public string EMAIL { get; set; } = "";
+    public DateTime? HIRE_DATE { get; set; }
+    public decimal? SALARY { get; set; }
+    public string SKILL_LEVEL { get; set; } = "";
+    public string WORK_SCHEDULE { get; set; } = "";
+
+    // 完整反向导航属性
+    public ICollection<STAFFLOCATION> STAFFLOCATIONS { get; set; } = new List<STAFFLOCATION>();
 }
