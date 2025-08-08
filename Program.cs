@@ -34,7 +34,7 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // 5. ÷–º‰º˛≈‰÷√
-if (app.Environment.IsDevelopment())
+if (aapp.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
