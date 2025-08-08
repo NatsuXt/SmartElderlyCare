@@ -3,8 +3,8 @@ using ElderlyCareSystem.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.UseUrls("http://localhost:5209");  // 指定监听端口
 
-// 1. 配置数据库连接字符串，假设你用的是 SQL Server
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseOracle(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -34,13 +34,13 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // 5. 中间件配置
-if (aapp.Environment.IsDevelopment() || app.Environment.IsProduction())
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
