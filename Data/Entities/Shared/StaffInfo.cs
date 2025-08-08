@@ -1,32 +1,29 @@
-// StaffInfo.cs
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace ElderlyCareManagement.Models
+namespace Staff_Info.Models;
+
+public class STAFFINFO
 {
-    public class StaffInfo
-    {
-        [Key]public int StaffId { get; set; }
-        public string Name { get; set; }
-        public string Gender { get; set; }
-        public string Position { get; set; }
-        public string ContactPhone { get; set; }
-        public string Email { get; set; }
-        public DateTime HireDate { get; set; }
-        public decimal Salary { get; set; }
-        public string SkillLevel { get; set; }
-        public string WorkSchedule { get; set; }
-        
-        // Navigation properties
-        public ICollection<NursingPlan> NursingPlans { get; set; }
-        public ICollection<ActivitySchedule> ActivitySchedules { get; set; }
-        public ICollection<MedicalOrder> MedicalOrders { get; set; }
-        public ICollection<OperationLog> OperationLogs { get; set; }
-        public ICollection<EmergencySOS> EmergencySosResponses { get; set; }
-        public ICollection<SystemAnnouncement> SystemAnnouncements { get; set; }
-        public ICollection<DisinfectionRecord> DisinfectionRecords { get; set; }
-        public virtual ICollection<StaffSchedule> Schedules { get; set; }
-        public virtual ICollection<StaffLocation> Locations { get; set; }
-        public virtual ICollection<SosNotification> Notifications { get; set; }
-    }
+    [Key]public decimal STAFF_ID { get; set; }
+    public string NAME { get; set; }
+    public string GENDER { get; set; }
+    public string POSITION { get; set; }
+    public string CONTACT_PHONE { get; set; }
+    public string EMAIL { get; set; }
+    public DateTime? HIRE_DATE { get; set; }
+    public decimal? SALARY { get; set; }
+    public string SKILL_LEVEL { get; set; }
+    public string WORK_SCHEDULE { get; set; }
+
+    // 完整反向导航属性
+    public ICollection<ACTIVITYSCHEDULE> ACTIVITYSCHEDULES { get; set; }
+    public ICollection<DISINFECTIONRECORD> DISINFECTIONRECORDS { get; set; }
+    public ICollection<EMERGENCYSOS> RESPONSIBLE_EMERGENCYSOS { get; set; } // 处理的紧急呼叫
+    public ICollection<MEDICALORDER> MEDICALORDERS { get; set; }
+    public ICollection<NURSINGPLAN> NURSINGPLANS { get; set; }
+    public ICollection<OPERATIONLOG> OPERATIONLOGS { get; set; }
+    public ICollection<SOSNOTIFICATION> SOSNOTIFICATIONS { get; set; }
+    public ICollection<SYSTEMANNOUNCEMENTS> CREATED_ANNOUNCEMENTS { get; set; }
+    public ICollection<STAFFLOCATION> STAFFLOCATIONS { get; set; }
+    public ICollection<STAFFSCHEDULE> STAFFSCHEDULES { get; set; }
 }
