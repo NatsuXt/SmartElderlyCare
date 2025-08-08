@@ -4,7 +4,7 @@
 
   {
     "elderly": {
-      "elderlyId": 1,
+      "elderlyId": 100,
       "name": "张三",
       "gender": "男",
       "birthDate": "1945-05-20T00:00:00Z",
@@ -15,7 +15,7 @@
     },
     "assessment": {
       "assessmentId": 101,
-      "elderlyId": 1,
+      "elderlyId": 100,
       "assessmentDate": "2025-07-20T09:00:00Z",
       "physicalHealthFunction": 8,
       "psychologicalFunction": 7,
@@ -24,7 +24,7 @@
     },
     "monitoring": {
       "monitoringId": 201,
-      "elderlyId": 1,
+      "elderlyId": 100,
       "monitoringDate": "2025-07-20T09:00:00Z",
       "heartRate": 75,
       "bloodPressure": "120/80",
@@ -35,7 +35,7 @@
     "families": [
       {
         "familyId": 301,
-        "elderlyId": 1,
+        "elderlyId": 100,
         "name": "李四",
         "relationship": "儿子",
         "contactPhone": "13800138001",
@@ -402,10 +402,9 @@
 ]
 
 
-
 {
-  "familyName": "李四",
-  "contactPhone": "13800138001",
-  "elderlyName": "张三",
-  "elderlyIdCardNumber": "110105194505201234"
+  "familyName": "string",
+  "contactPhone": "string",
+  "elderlyName": "string",
+  "elderlyIdCardNumber": "string"
 }

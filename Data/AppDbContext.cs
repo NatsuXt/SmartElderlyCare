@@ -25,6 +25,11 @@ namespace ElderlyCareSystem.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<HealthAssessmentReport>()
+        .ToTable("HEALTHASSESSMENTREPORT", schema: "SYS");
+            modelBuilder.Entity<MedicalOrder>()
+    .ToTable("MEDICALORDER", schema: "SYS");
+
             // === FamilyInfo 外键关联 ElderlyInfo ===
             modelBuilder.Entity<FamilyInfo>()
                 .HasOne(f => f.Elderly)
