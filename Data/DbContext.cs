@@ -39,3 +39,6 @@ public DbSet<ActivityParticipation> ActivityParticipations { get; set; }
 
 // 饮食推荐表(DietRecommendation)
 public DbSet<DietRecommendation> DietRecommendations { get; set; }
+
+// 健康评估报告表(HealthAssessmentReport)
+public DbSet<HealthAssessmentReport> HealthAssessmentReports { get; set; }
