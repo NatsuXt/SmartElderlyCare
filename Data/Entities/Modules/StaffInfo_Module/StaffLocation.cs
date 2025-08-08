@@ -6,7 +6,7 @@ public class STAFFLOCATION
 {
     [Key]public decimal LOCATION_ID { get; set; }
     public decimal STAFF_ID { get; set; }
-    public decimal? ROOM_ID { get; set; }
+    public decimal? FLOOR { get; set; }
     public DateTime UPDATE_TIME { get; set; }
 
     // 外键导航属性
