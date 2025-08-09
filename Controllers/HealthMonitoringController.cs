@@ -10,7 +10,7 @@ namespace RoomDeviceManagement.Controllers
     /// 功能：IoT设备健康数据上报、解析、存储、异常检测、警报通知
     /// </summary>
     [ApiController]
-    [Route("api/health-monitoring")]
+    [Route("api/[controller]")]
     public class HealthMonitoringController : ControllerBase
     {
         private readonly HealthMonitoringService _healthService;
@@ -26,7 +26,7 @@ namespace RoomDeviceManagement.Controllers
         /// IoT健康监测设备数据上报接口（核心业务接口）
         /// 处理智能手环等设备采集的心率、血压、血氧、体温数据
         /// </summary>
-        [HttpPost("data-report")]
+        [HttpPost("report")]
         public async Task<IActionResult> ReportHealthData([FromBody] HealthDataReportDto healthReport)
         {
             try
@@ -54,7 +54,7 @@ namespace RoomDeviceManagement.Controllers
         /// <summary>
         /// 批量健康数据上报（支持IoT网关批量传输）
         /// </summary>
-        [HttpPost("batch-data-report")]
+        [HttpPost("batch-report")]
         public async Task<IActionResult> ReportBatchHealthData([FromBody] List<HealthDataReportDto> healthReports)
         {
             try

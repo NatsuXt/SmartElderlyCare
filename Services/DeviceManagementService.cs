@@ -1,55 +1,55 @@
 using RoomDeviceManagement.Models;
 using RoomDeviceManagement.DTOs;
+using System.Linq;
 
 namespace RoomDeviceManagement.Services
 {
     /// <summary>
-    /// 设备管理服务
+    /// 设备管理服务 - 使用中文兼容数据库服务
     /// </summary>
     public class DeviceManagementService
     {
-        private readonly DatabaseService _databaseService;
+        private readonly ChineseCompatibleDatabaseService _chineseDbService;
+        private readonly DatabaseService _databaseService; // 临时保留用于其他方法
         private readonly ILogger<DeviceManagementService> _logger;
 
-        public DeviceManagementService(DatabaseService databaseService, ILogger<DeviceManagementService> logger)
+        public DeviceManagementService(ChineseCompatibleDatabaseService chineseDbService, DatabaseService databaseService, ILogger<DeviceManagementService> logger)
         {
+            _chineseDbService = chineseDbService;
             _databaseService = databaseService;
             _logger = logger;
         }
 
         /// <summary>
-        /// 创建设备
+        /// 创建设备 - 使用中文兼容服务
         /// </summary>
         public async Task<ApiResponse<DeviceDetailDto>> CreateDeviceAsync(DeviceCreateDto deviceDto)
         {
             try
             {
-                var sql = @"
-                    INSERT INTO DeviceStatus (
-                        device_name, device_type, location, status, 
-                        last_maintenance_date, installation_date
-                    ) VALUES (
-                        :DeviceName, :DeviceType, :Location, :Status,
-                        :LastMaintenanceDate, :InstallationDate
-                    )";
-                
-                var parameters = new
-                {
-                    deviceDto.DeviceName,
-                    deviceDto.DeviceType,
-                    deviceDto.Location,
+                _logger.LogInformation($"📱 创建新设备: {deviceDto.DeviceName} - {deviceDto.DeviceType}");
+                _logger.LogInformation($"🔍 调试 - 接收到的DTO数据:");
+                _logger.LogInformation($"   - DeviceName: '{deviceDto.DeviceName}' (长度: {deviceDto.DeviceName?.Length})");
+                _logger.LogInformation($"   - DeviceType: '{deviceDto.DeviceType}' (长度: {deviceDto.DeviceType?.Length})");
+                _logger.LogInformation($"   - Location: '{deviceDto.Location}' (长度: {deviceDto.Location?.Length})");
+                _logger.LogInformation($"   - Status: '{deviceDto.Status}' (长度: {deviceDto.Status?.Length})");
+
+                // 使用中文兼容数据库服务创建设备
+                await _chineseDbService.CreateDeviceAsync(
+                    deviceDto.DeviceName, 
+                    deviceDto.DeviceType, 
+                    deviceDto.Location ?? "", 
                     deviceDto.Status,
-                    LastMaintenanceDate = deviceDto.LastMaintenanceDate ?? DateTime.Now,
-                    InstallationDate = DateTime.Now
-                };
-                
-                await _databaseService.ExecuteAsync(sql, parameters);
+                    deviceDto.LastMaintenanceDate ?? DateTime.Now,
+                    DateTime.Now
+                );
 
                 // 通过设备名称获取新创建的设备
                 var createdDevice = await GetDeviceByNameAsync(deviceDto.DeviceName);
                 if (createdDevice.Success)
                 {
                     createdDevice.Message = "设备创建成功";
+                    _logger.LogInformation($"✅ 设备创建成功: {deviceDto.DeviceName} - {deviceDto.DeviceType}");
                     return createdDevice;
                 }
 
@@ -71,43 +71,36 @@ namespace RoomDeviceManagement.Services
         }
 
         /// <summary>
-        /// 更新设备
+        /// 更新设备 - 使用中文兼容服务
         /// </summary>
         public async Task<ApiResponse<DeviceDetailDto>> UpdateDeviceAsync(int deviceId, DeviceUpdateDto deviceDto)
         {
             try
             {
-                var setParts = new List<string>();
-                var parameters = new Dictionary<string, object> { { "deviceId", deviceId } };
+                var updateFields = new Dictionary<string, object>();
 
                 if (!string.IsNullOrEmpty(deviceDto.DeviceName))
                 {
-                    setParts.Add("device_name = :deviceName");
-                    parameters["deviceName"] = deviceDto.DeviceName;
+                    updateFields["device_name"] = deviceDto.DeviceName;
                 }
                 if (!string.IsNullOrEmpty(deviceDto.DeviceType))
                 {
-                    setParts.Add("device_type = :deviceType");
-                    parameters["deviceType"] = deviceDto.DeviceType;
+                    updateFields["device_type"] = deviceDto.DeviceType;
                 }
                 if (!string.IsNullOrEmpty(deviceDto.Location))
                 {
-                    setParts.Add("location = :location");
-                    parameters["location"] = deviceDto.Location;
+                    updateFields["location"] = deviceDto.Location;
                 }
-                // RoomId field is not available in current database schema
                 if (!string.IsNullOrEmpty(deviceDto.Status))
                 {
-                    setParts.Add("status = :status");
-                    parameters["status"] = deviceDto.Status;
+                    updateFields["status"] = deviceDto.Status;
                 }
                 if (deviceDto.LastMaintenanceDate.HasValue)
                 {
-                    setParts.Add("last_maintenance_date = :lastMaintenanceDate");
-                    parameters["lastMaintenanceDate"] = deviceDto.LastMaintenanceDate.Value;
+                    updateFields["last_maintenance_date"] = deviceDto.LastMaintenanceDate.Value;
                 }
 
-                if (!setParts.Any())
+                if (!updateFields.Any())
                 {
                     return new ApiResponse<DeviceDetailDto>
                     {
@@ -116,8 +109,8 @@ namespace RoomDeviceManagement.Services
                     };
                 }
 
-                var sql = $"UPDATE DeviceStatus SET {string.Join(", ", setParts)} WHERE device_id = :deviceId";
-                var rowsAffected = await _databaseService.ExecuteAsync(sql, parameters);
+                // 使用中文兼容数据库服务更新设备
+                var rowsAffected = await _chineseDbService.UpdateDeviceAsync(deviceId, updateFields);
                 
                 if (rowsAffected == 0)
                 {
@@ -153,14 +146,14 @@ namespace RoomDeviceManagement.Services
         }
 
         /// <summary>
-        /// 删除设备
+        /// 删除设备 - 使用中文兼容服务
         /// </summary>
         public async Task<ApiResponse<bool>> DeleteDeviceAsync(int deviceId)
         {
             try
             {
-                var sql = "DELETE FROM DeviceStatus WHERE device_id = :deviceId";
-                var rowsAffected = await _databaseService.ExecuteAsync(sql, new { deviceId });
+                // 使用中文兼容数据库服务删除设备
+                var rowsAffected = await _chineseDbService.DeleteDeviceAsync(deviceId);
                 
                 if (rowsAffected == 0)
                 {
@@ -190,46 +183,26 @@ namespace RoomDeviceManagement.Services
         }
 
         /// <summary>
-        /// 获取设备列表
+        /// 获取设备列表 - 使用中文兼容服务
         /// </summary>
         public async Task<ApiResponse<List<DeviceDetailDto>>> GetDevicesAsync(PagedRequest request)
         {
             try
             {
+                _logger.LogInformation($"🔍 获取设备列表: 页码={request.Page}, 大小={request.PageSize}, 搜索='{request.Search}'");
+                
+                // 使用中文兼容数据库服务
+                var devices = await _chineseDbService.GetDevicesAsync(request.Search);
+                
+                // 手动分页
+                var totalCount = devices.Count;
                 var offset = (request.Page - 1) * request.PageSize;
-                var whereClause = string.IsNullOrEmpty(request.Search) ? "" : 
-                    "WHERE UPPER(device_name) LIKE '%' || UPPER(:search) || '%' OR UPPER(device_type) LIKE '%' || UPPER(:search) || '%'";
+                var pagedDevices = devices
+                    .Skip(offset)
+                    .Take(request.PageSize)
+                    .ToList();
                 
-                var orderClause = request.SortBy switch
-                {
-                    "deviceName" => $"ORDER BY device_name {(request.SortDesc ? "DESC" : "ASC")}",
-                    "deviceType" => $"ORDER BY device_type {(request.SortDesc ? "DESC" : "ASC")}",
-                    "status" => $"ORDER BY status {(request.SortDesc ? "DESC" : "ASC")}",
-                    _ => "ORDER BY device_id ASC"
-                };
-
-                var sql = $@"
-                    SELECT * FROM (
-                        SELECT device_id, device_name, device_type, location, status,
-                               last_maintenance_date, installation_date,
-                               ROW_NUMBER() OVER ({orderClause}) as rn
-                        FROM DeviceStatus 
-                        {whereClause}
-                    ) WHERE rn > :offset AND rn <= :endRow";
-
-                object parameters;
-                if (string.IsNullOrEmpty(request.Search))
-                {
-                    parameters = new { offset = offset, endRow = offset + request.PageSize };
-                }
-                else
-                {
-                    parameters = new { search = request.Search, offset = offset, endRow = offset + request.PageSize };
-                }
-                
-                var devices = await _databaseService.QueryAsync<DeviceStatus>(sql, parameters);
-                
-                var deviceList = devices.Select(d => new DeviceDetailDto
+                var deviceList = pagedDevices.Select(d => new DeviceDetailDto
                 {
                     DeviceId = d.DeviceId,
                     DeviceName = d.DeviceName,
@@ -241,11 +214,14 @@ namespace RoomDeviceManagement.Services
                     InstallationDate = d.InstallationDate
                 }).ToList();
 
+                _logger.LogInformation($"✅ 成功获取 {deviceList.Count} 个设备，总计 {totalCount} 个");
+
                 return new ApiResponse<List<DeviceDetailDto>>
                 {
                     Success = true,
                     Message = "获取设备列表成功",
-                    Data = deviceList
+                    Data = deviceList,
+                    TotalCount = totalCount
                 };
             }
             catch (Exception ex)
@@ -260,20 +236,14 @@ namespace RoomDeviceManagement.Services
         }
 
         /// <summary>
-        /// 根据ID获取设备详情
+        /// 根据ID获取设备详情 - 使用中文兼容服务
         /// </summary>
         public async Task<ApiResponse<DeviceDetailDto>> GetDeviceByIdAsync(int deviceId)
         {
             try
             {
-                var sql = @"
-                    SELECT device_id, device_name, device_type, location, status,
-                           last_maintenance_date, installation_date
-                    FROM DeviceStatus
-                    WHERE device_id = :deviceId";
-
-                var results = await _databaseService.QueryAsync<DeviceStatus>(sql, new { deviceId });
-                var device = results.FirstOrDefault();
+                // 使用中文兼容数据库服务获取设备
+                var device = await _chineseDbService.GetDeviceByIdAsync(deviceId);
                 
                 if (device != null)
                 {
@@ -315,20 +285,14 @@ namespace RoomDeviceManagement.Services
         }
 
         /// <summary>
-        /// 根据设备名称获取设备
+        /// 根据设备名称获取设备 - 使用中文兼容服务
         /// </summary>
         private async Task<ApiResponse<DeviceDetailDto>> GetDeviceByNameAsync(string deviceName)
         {
             try
             {
-                var sql = @"
-                    SELECT device_id, device_name, device_type, location, status,
-                           last_maintenance_date, installation_date
-                    FROM DeviceStatus
-                    WHERE device_name = :deviceName";
-
-                var results = await _databaseService.QueryAsync<DeviceStatus>(sql, new { deviceName });
-                var device = results.FirstOrDefault();
+                // 使用中文兼容数据库服务获取设备
+                var device = await _chineseDbService.GetDeviceByNameAsync(deviceName);
                 
                 if (device != null)
                 {
@@ -370,40 +334,14 @@ namespace RoomDeviceManagement.Services
         }
 
         /// <summary>
-        /// 获取设备统计信息
+        /// 获取设备统计信息 - 使用中文兼容服务
         /// </summary>
         public async Task<ApiResponse<object>> GetDeviceStatisticsAsync()
         {
             try
             {
-                var statisticsSql = @"
-                    SELECT 
-                        COUNT(*) as total_devices,
-                        SUM(CASE WHEN UPPER(status) = '正常' OR UPPER(status) = 'NORMAL' THEN 1 ELSE 0 END) as normal_devices,
-                        SUM(CASE WHEN UPPER(status) = '故障' OR UPPER(status) = 'ERROR' OR UPPER(status) = 'FAULT' THEN 1 ELSE 0 END) as fault_devices,
-                        SUM(CASE WHEN UPPER(status) = '维护中' OR UPPER(status) = 'MAINTENANCE' THEN 1 ELSE 0 END) as maintenance_devices
-                    FROM DeviceStatus";
-
-                var typeDistributionSql = @"
-                    SELECT device_type, COUNT(*) as count
-                    FROM DeviceStatus
-                    GROUP BY device_type
-                    ORDER BY count DESC";
-
-                var statistics = await _databaseService.QueryFirstOrDefaultAsync<dynamic>(statisticsSql);
-                var typeDistribution = await _databaseService.QueryAsync<dynamic>(typeDistributionSql);
-
-                var result = new
-                {
-                    总设备数 = statistics?.total_devices ?? 0,
-                    正常设备 = statistics?.normal_devices ?? 0,
-                    故障设备 = statistics?.fault_devices ?? 0,
-                    维护中设备 = statistics?.maintenance_devices ?? 0,
-                    设备类型分布 = typeDistribution?.Select(t => new { 
-                        设备类型 = t.device_type, 
-                        数量 = t.count 
-                    }).ToList()
-                };
+                // 使用中文兼容数据库服务获取统计信息
+                var result = await _chineseDbService.GetDeviceStatisticsAsync();
 
                 return new ApiResponse<object>
                 {
@@ -419,6 +357,140 @@ namespace RoomDeviceManagement.Services
                 {
                     Success = false,
                     Message = $"获取设备统计信息失败: {ex.Message}"
+                };
+            }
+        }
+
+        /// <summary>
+        /// 轮询所有设备状态 - 从IoT模块迁移
+        /// </summary>
+        public async Task<ApiResponse<object>> PollAllDeviceStatusAsync()
+        {
+            try
+            {
+                _logger.LogInformation("🔄 开始轮询所有设备状态");
+
+                var devices = await _chineseDbService.GetDevicesAsync();
+                
+                var faultDevices = devices.Where(d => d.Status == "故障" || d.Status == "异常" || d.Status == "ERROR").ToList();
+                
+                // 如果有故障设备，记录日志（通知功能由其他同学的警报模块处理）
+                if (faultDevices.Any())
+                {
+                    _logger.LogWarning($"⚠️ 发现 {faultDevices.Count} 个故障设备");
+                    foreach (var device in faultDevices)
+                    {
+                        _logger.LogWarning($"故障设备: {device.DeviceName} ({device.DeviceType}) - 状态: {device.Status}");
+                    }
+                }
+
+                return new ApiResponse<object>
+                {
+                    Success = true,
+                    Message = "设备状态轮询完成",
+                    Data = new
+                    {
+                        TotalDevices = devices.Count,
+                        FaultDevices = faultDevices.Count,
+                        OnlineDevices = devices.Count(d => d.Status == "正常" || d.Status == "在线"),
+                        Devices = devices,
+                        LastPolled = DateTime.Now
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "设备状态轮询失败");
+                return new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = $"设备状态轮询失败: {ex.Message}"
+                };
+            }
+        }
+
+        /// <summary>
+        /// 处理设备故障上报 - 从IoT模块迁移
+        /// </summary>
+        public async Task<ApiResponse<object>> HandleDeviceFaultAsync(DeviceFaultReportDto faultReport)
+        {
+            try
+            {
+                _logger.LogWarning($"⚠️ 接收到设备故障上报: 设备ID={faultReport.DeviceId}, 故障类型={faultReport.FaultStatus}");
+
+                // 检查设备是否存在
+                var device = await _chineseDbService.GetDeviceByIdAsync(faultReport.DeviceId);
+                if (device == null)
+                {
+                    return new ApiResponse<object>
+                    {
+                        Success = false,
+                        Message = $"设备 {faultReport.DeviceId} 不存在"
+                    };
+                }
+
+                // 更新设备状态为故障
+                await _chineseDbService.UpdateDeviceStatusAsync(faultReport.DeviceId, "故障");
+
+                _logger.LogInformation($"✅ 设备 {faultReport.DeviceId} 状态已更新为故障");
+
+                return new ApiResponse<object>
+                {
+                    Success = true,
+                    Message = "设备故障上报处理成功",
+                    Data = new
+                    {
+                        DeviceId = faultReport.DeviceId,
+                        DeviceName = device.DeviceName,
+                        FaultType = faultReport.FaultStatus,
+                        ReportTime = faultReport.ReportTime,
+                        ProcessedAt = DateTime.Now
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"处理设备故障上报失败: DeviceId={faultReport.DeviceId}");
+                return new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = $"处理设备故障上报失败: {ex.Message}"
+                };
+            }
+        }
+
+        /// <summary>
+        /// 手动触发设备状态同步 - 从IoT模块迁移
+        /// </summary>
+        public async Task<ApiResponse<object>> SyncAllDeviceStatusAsync()
+        {
+            try
+            {
+                _logger.LogInformation("🔄 开始手动同步所有设备状态");
+
+                // 重用轮询功能进行同步
+                var pollResult = await PollAllDeviceStatusAsync();
+                
+                if (pollResult.Success)
+                {
+                    _logger.LogInformation("✅ 设备状态同步完成");
+                    return new ApiResponse<object>
+                    {
+                        Success = true,
+                        Message = "设备状态同步完成",
+                        Data = pollResult.Data
+                    };
+                }
+
+                return pollResult;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "设备状态同步失败");
+                return new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = $"设备状态同步失败: {ex.Message}"
                 };
             }
         }

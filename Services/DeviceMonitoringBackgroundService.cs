@@ -53,7 +53,7 @@ namespace RoomDeviceManagement.Services
         private async Task PerformDeviceMonitoringAsync()
         {
             using var scope = _serviceProvider.CreateScope();
-            var deviceService = scope.ServiceProvider.GetRequiredService<IoTMonitoringService>();
+            var deviceService = scope.ServiceProvider.GetRequiredService<DeviceManagementService>();
             var databaseService = scope.ServiceProvider.GetRequiredService<DatabaseService>();
 
             try
@@ -79,7 +79,7 @@ namespace RoomDeviceManagement.Services
         /// <summary>
         /// 检查新出现的故障设备并发送通知
         /// </summary>
-        private async Task CheckForNewFaultDevicesAsync(DatabaseService databaseService, IoTMonitoringService deviceService)
+        private async Task CheckForNewFaultDevicesAsync(DatabaseService databaseService, DeviceManagementService deviceService)
         {
             try
             {

@@ -1,18 +1,110 @@
 using RoomDeviceManagement.Services;
 using RoomDeviceManagement;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Unicode;
+
+// 🔧 在程序最开始设置Oracle 19c中文字符环境变量 - 确保在任何Oracle连接之前生效
+Environment.SetEnvironmentVariable("NLS_LANG", "SIMPLIFIED CHINESE_CHINA.AL32UTF8");
+Environment.SetEnvironmentVariable("ORA_NCHAR_LITERAL_REPLACE", "TRUE");
+Console.WriteLine("✅ Oracle 19c 中文字符环境变量已在程序启动时设置");
+
+// 🔧 Oracle 19c 中文字符环境初始化（附加确保）
+Oracle19cChineseTestHelper.InitializeOracleEnvironment();
+
+// 🔍 检查是否要运行诊断工具
+if (args.Length > 0 && args[0] == "diagnose")
+{
+    await RoomDeviceManagement.Services.ChineseDiagnosticTool.RunFullDiagnostic();
+    Console.WriteLine("\n按任意键退出...");
+    Console.ReadKey();
+    return;
+}
+
+// 🔍 检查是否要测试中文兼容服务
+if (args.Length > 0 && args[0] == "test-chinese")
+{
+    await RoomDeviceManagement.TestChineseService.RunTest();
+    return;
+}
+
+// 🔍 检查是否要测试健康监测服务
+if (args.Length > 0 && args[0] == "test-health")
+{
+    await RoomDeviceManagement.TestHealthMonitoringService.RunTest();
+    return;
+}
+
+// 🔍 检查是否要测试电子围栏服务
+if (args.Length > 0 && args[0] == "test-fence")
+{
+    await RoomDeviceManagement.TestElectronicFenceService.RunTest();
+    return;
+}
+
+// 🔍 检查是否要运行中文编码诊断
+if (args.Length > 0 && args[0] == "diagnose-encoding")
+{
+    await RoomDeviceManagement.ChineseEncodingDiagnostic.RunDiagnostic();
+    Console.WriteLine("\n按任意键退出...");
+    Console.ReadKey();
+    return;
+}
+
+// 🔍 检查是否要修复乱码数据
+if (args.Length > 0 && args[0] == "fix-encoding")
+{
+    await RoomDeviceManagement.ChineseEncodingDiagnostic.FixGarbledData();
+    Console.WriteLine("\n按任意键退出...");
+    Console.ReadKey();
+    return;
+}
+
+// 🔍 检查是否要修复中文数据
+if (args.Length > 0 && args[0] == "repair-chinese")
+{
+    await ChineseDataRepairTool.RepairChineseData();
+    Console.WriteLine("\n按任意键退出...");
+    Console.ReadKey();
+    return;
+}
+
+// 🔍 检查围栏表结构
+if (args.Length > 0 && args[0] == "check-fence-tables")
+{
+    await FenceTableCheck.CheckFenceTableStructure();
+    Console.WriteLine("\n按任意键退出...");
+    Console.ReadKey();
+    return;
+}
+
+// 🏥 检查是否要测试健康监测服务
+if (args.Length > 0 && args[0] == "test-health")
+{
+    await RoomDeviceManagement.TestHealthMonitoringService.RunTest();
+    return;
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
 // 添加服务到容器
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // 🔧 配置JSON序列化以正确处理中文字符
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.Encoder = JavaScriptEncoder.Create(UnicodeRanges.All);
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // 注册服务
 builder.Services.AddScoped<DatabaseService>();
+builder.Services.AddScoped<ChineseCompatibleDatabaseService>(); // 🆕 新增中文兼容数据库服务
 builder.Services.AddScoped<ElectronicFenceService>();
 builder.Services.AddScoped<HealthMonitoringService>();
-builder.Services.AddScoped<IoTMonitoringService>();
+// IoTMonitoringService 已移除，功能迁移到 DeviceManagementService
 
 // 注册后台服务
 builder.Services.AddHostedService<DeviceMonitoringBackgroundService>();

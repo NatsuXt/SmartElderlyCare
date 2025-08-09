@@ -152,5 +152,88 @@ namespace RoomDeviceManagement.Controllers
                 });
             }
         }
+
+        /// <summary>
+        /// 智能设备状态监控 - 轮询所有设备状态（从IoT模块迁移）
+        /// </summary>
+        [HttpGet("poll-status")]
+        public async Task<IActionResult> PollDeviceStatus()
+        {
+            try
+            {
+                var result = await _deviceManagementService.PollAllDeviceStatusAsync();
+                if (result.Success)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "设备状态轮询失败");
+                return StatusCode(500, new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = $"设备状态轮询失败: {ex.Message}"
+                });
+            }
+        }
+
+        /// <summary>
+        /// 设备故障状态上报接口（从IoT模块迁移）
+        /// </summary>
+        [HttpPost("fault-report")]
+        public async Task<IActionResult> ReportDeviceFault([FromBody] DeviceFaultReportDto faultReport)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var result = await _deviceManagementService.HandleDeviceFaultAsync(faultReport);
+                if (result.Success)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "设备故障上报处理失败");
+                return StatusCode(500, new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = $"设备故障上报处理失败: {ex.Message}"
+                });
+            }
+        }
+
+        /// <summary>
+        /// 手动触发设备状态同步（从IoT模块迁移）
+        /// </summary>
+        [HttpPost("sync")]
+        public async Task<IActionResult> SyncDeviceStatus()
+        {
+            try
+            {
+                var result = await _deviceManagementService.SyncAllDeviceStatusAsync();
+                if (result.Success)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "设备状态同步失败");
+                return StatusCode(500, new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = $"设备状态同步失败: {ex.Message}"
+                });
+            }
+        }
     }
 }

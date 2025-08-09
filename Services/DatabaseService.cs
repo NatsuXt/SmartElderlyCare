@@ -31,7 +31,13 @@ namespace RoomDeviceManagement.Services
         /// <returns>Oracle数据库连接对象</returns>
         public OracleConnection GetConnection()
         {
-            return new OracleConnection(_connectionString);
+            var connection = new OracleConnection(_connectionString);
+            
+            // 为Oracle 19c设置字符编码环境变量
+            Environment.SetEnvironmentVariable("NLS_LANG", "SIMPLIFIED CHINESE_CHINA.AL32UTF8");
+            Environment.SetEnvironmentVariable("ORA_NCHAR_LITERAL_REPLACE", "TRUE");
+            
+            return connection;
         }
 
         /// <summary>
@@ -45,6 +51,9 @@ namespace RoomDeviceManagement.Services
                 await connection.OpenAsync();
                 
                 using var command = new OracleCommand(sql, connection);
+                
+                // 设置正确的字符编码处理
+                command.BindByName = true;
                 
                 if (parameters != null)
                 {
@@ -81,6 +90,9 @@ namespace RoomDeviceManagement.Services
                 await connection.OpenAsync();
                 
                 using var command = new OracleCommand(sql, connection);
+                
+                // 设置正确的字符编码处理
+                command.BindByName = true;
                 
                 if (parameters != null)
                 {
@@ -175,7 +187,19 @@ namespace RoomDeviceManagement.Services
             foreach (var prop in properties)
             {
                 var value = prop.GetValue(parameters) ?? DBNull.Value;
-                command.Parameters.Add(new OracleParameter($"@{prop.Name}", value));
+                
+                // 对于字符串参数，使用 NVarchar2 类型确保正确处理中文
+                if (value is string stringValue)
+                {
+                    var parameter = new OracleParameter(prop.Name, OracleDbType.NVarchar2);
+                    parameter.Value = stringValue;
+                    command.Parameters.Add(parameter);
+                }
+                else
+                {
+                    var parameter = new OracleParameter(prop.Name, value);
+                    command.Parameters.Add(parameter);
+                }
             }
         }
 
@@ -203,8 +227,22 @@ namespace RoomDeviceManagement.Services
                             var value = reader[columnName];
                             if (value != DBNull.Value)
                             {
+                                // 特别处理字符串类型以确保中文字符正确读取 - 使用与诊断工具相同的方法
+                                if (prop.PropertyType == typeof(string))
+                                {
+                                    // 使用索引读取，就像诊断工具一样
+                                    for (int i = 0; i < reader.FieldCount; i++)
+                                    {
+                                        if (reader.GetName(i).Equals(columnName, StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            var stringValue = reader.GetString(i);
+                                            prop.SetValue(obj, stringValue);
+                                            break;
+                                        }
+                                    }
+                                }
                                 // 处理类型转换
-                                if (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                                else if (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
                                 {
                                     var underlyingType = Nullable.GetUnderlyingType(prop.PropertyType);
                                     prop.SetValue(obj, Convert.ChangeType(value, underlyingType!));
