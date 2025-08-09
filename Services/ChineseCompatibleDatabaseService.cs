@@ -206,6 +206,131 @@ namespace RoomDeviceManagement.Services
         }
 
         /// <summary>
+        /// 根据房间ID获取房间信息
+        /// </summary>
+        public async Task<RoomData?> GetRoomByIdAsync(int roomId)
+        {
+            try
+            {
+                _logger.LogInformation($"🔍 中文兼容服务根据房间ID获取房间: {roomId}");
+
+                using var connection = new OracleConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                var sql = "SELECT room_id, room_number, room_type, capacity, status, rate, bed_type, floor FROM RoomManagement WHERE room_id = :roomId";
+                
+                using var command = new OracleCommand(sql, connection);
+                command.Parameters.Add(":roomId", OracleDbType.Int32).Value = roomId;
+
+                using var reader = await command.ExecuteReaderAsync();
+                
+                if (await reader.ReadAsync())
+                {
+                    var room = new RoomData
+                    {
+                        RoomId = reader.GetInt32(0),
+                        RoomNumber = reader.GetString(1),
+                        RoomType = reader.GetString(2),
+                        Capacity = reader.GetInt32(3),
+                        Status = reader.GetString(4),
+                        Rate = reader.GetDecimal(5),
+                        BedType = reader.GetString(6),
+                        Floor = reader.GetInt32(7)
+                    };
+
+                    _logger.LogInformation($"✅ 中文兼容服务成功获取房间: {room.RoomNumber} - {room.RoomType}");
+                    return room;
+                }
+
+                _logger.LogInformation($"❌ 中文兼容服务未找到房间ID: {roomId}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"中文兼容服务根据房间ID获取房间失败: {roomId}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 更新房间信息 - 中文兼容版本
+        /// </summary>
+        public async Task<int> UpdateRoomAsync(int roomId, Dictionary<string, object> updateFields)
+        {
+            try
+            {
+                _logger.LogInformation($"📝 中文兼容服务更新房间: ID={roomId}");
+
+                if (!updateFields.Any())
+                {
+                    _logger.LogWarning("没有提供更新字段");
+                    return 0;
+                }
+
+                using var connection = new OracleConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                // 构建动态SQL更新语句
+                var setParts = new List<string>();
+                var parameters = new List<OracleParameter>();
+
+                foreach (var field in updateFields)
+                {
+                    string columnName = field.Key switch
+                    {
+                        "roomNumber" => "room_number",
+                        "roomType" => "room_type",
+                        "capacity" => "capacity",
+                        "status" => "status",
+                        "rate" => "rate",
+                        "bedType" => "bed_type",
+                        "floor" => "floor",
+                        _ => field.Key.ToLower()
+                    };
+
+                    setParts.Add($"{columnName} = :{field.Key}");
+
+                    // 根据字段类型设置正确的参数类型
+                    if (field.Value is string stringValue)
+                    {
+                        parameters.Add(new OracleParameter(field.Key, OracleDbType.NVarchar2) { Value = stringValue });
+                    }
+                    else if (field.Value is int intValue)
+                    {
+                        parameters.Add(new OracleParameter(field.Key, OracleDbType.Int32) { Value = intValue });
+                    }
+                    else if (field.Value is decimal decimalValue)
+                    {
+                        parameters.Add(new OracleParameter(field.Key, OracleDbType.Decimal) { Value = decimalValue });
+                    }
+                    else
+                    {
+                        parameters.Add(new OracleParameter(field.Key, OracleDbType.NVarchar2) { Value = field.Value?.ToString() ?? "" });
+                    }
+                }
+
+                var sql = $"UPDATE RoomManagement SET {string.Join(", ", setParts)} WHERE room_id = :roomId";
+                parameters.Add(new OracleParameter("roomId", OracleDbType.Int32) { Value = roomId });
+
+                using var command = new OracleCommand(sql, connection);
+                foreach (var param in parameters)
+                {
+                    command.Parameters.Add(param);
+                }
+
+                var rowsAffected = await command.ExecuteNonQueryAsync();
+                
+                _logger.LogInformation($"✅ 中文兼容服务成功更新房间: ID={roomId}, 影响行数={rowsAffected}");
+                return rowsAffected;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"中文兼容服务更新房间失败: ID={roomId}");
+                throw;
+            }
+        }
+
+        /// <summary>
         /// 测试数据库连接和中文字符支持
         /// </summary>
         public async Task<bool> TestChineseCharacterSupportAsync()

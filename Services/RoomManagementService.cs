@@ -135,8 +135,7 @@ namespace RoomDeviceManagement.Services
             {
                 _logger.LogInformation($"🔍 根据ID获取房间信息: {roomId}");
                 
-                var rooms = await _chineseDbService.GetRoomsAsync("");
-                var room = rooms.FirstOrDefault(r => r.RoomId == roomId);
+                var room = await _chineseDbService.GetRoomByIdAsync(roomId);
                 
                 if (room == null)
                 {
@@ -267,8 +266,8 @@ namespace RoomDeviceManagement.Services
                 _logger.LogInformation($"📝 更新房间信息: ID={roomId}");
                 
                 // 先获取现有房间信息
-                var existingRoom = await GetRoomByIdAsync(roomId);
-                if (!existingRoom.Success || existingRoom.Data == null)
+                var existingRoom = await _chineseDbService.GetRoomByIdAsync(roomId);
+                if (existingRoom == null)
                 {
                     return new ApiResponse<RoomDetailDto>
                     {
@@ -277,13 +276,102 @@ namespace RoomDeviceManagement.Services
                     };
                 }
 
-                // 这里需要在ChineseCompatibleDatabaseService中添加更新方法
-                // 暂时返回未实现消息
-                return new ApiResponse<RoomDetailDto>
+                // 构建更新字段
+                var updateFields = new Dictionary<string, object>();
+
+                if (!string.IsNullOrWhiteSpace(updateRoomDto.RoomNumber))
                 {
-                    Success = false,
-                    Message = "更新功能正在开发中，请稍后再试"
-                };
+                    updateFields["roomNumber"] = updateRoomDto.RoomNumber.Trim();
+                }
+                
+                if (!string.IsNullOrWhiteSpace(updateRoomDto.RoomType))
+                {
+                    updateFields["roomType"] = updateRoomDto.RoomType.Trim();
+                }
+                
+                if (updateRoomDto.Capacity.HasValue)
+                {
+                    updateFields["capacity"] = updateRoomDto.Capacity.Value;
+                }
+                
+                if (!string.IsNullOrWhiteSpace(updateRoomDto.Status))
+                {
+                    updateFields["status"] = updateRoomDto.Status.Trim();
+                }
+                
+                if (updateRoomDto.Rate.HasValue)
+                {
+                    updateFields["rate"] = updateRoomDto.Rate.Value;
+                }
+                
+                if (!string.IsNullOrWhiteSpace(updateRoomDto.BedType))
+                {
+                    updateFields["bedType"] = updateRoomDto.BedType.Trim();
+                }
+                
+                if (updateRoomDto.Floor.HasValue)
+                {
+                    updateFields["floor"] = updateRoomDto.Floor.Value;
+                }
+
+                // 如果有房间号更新，检查是否重复
+                if (updateFields.ContainsKey("roomNumber"))
+                {
+                    var duplicateRoom = await _chineseDbService.GetRoomByNumberAsync(updateFields["roomNumber"].ToString());
+                    if (duplicateRoom != null && duplicateRoom.RoomId != roomId)
+                    {
+                        return new ApiResponse<RoomDetailDto>
+                        {
+                            Success = false,
+                            Message = $"房间号 {updateFields["roomNumber"]} 已存在"
+                        };
+                    }
+                }
+
+                // 执行更新
+                if (updateFields.Any())
+                {
+                    var rowsAffected = await _chineseDbService.UpdateRoomAsync(roomId, updateFields);
+                    
+                    if (rowsAffected > 0)
+                    {
+                        // 获取更新后的房间信息
+                        var updatedRoom = await _chineseDbService.GetRoomByIdAsync(roomId);
+                        
+                        return new ApiResponse<RoomDetailDto>
+                        {
+                            Success = true,
+                            Message = "房间信息更新成功",
+                            Data = new RoomDetailDto
+                            {
+                                RoomId = updatedRoom.RoomId,
+                                RoomNumber = updatedRoom.RoomNumber,
+                                RoomType = updatedRoom.RoomType,
+                                Capacity = updatedRoom.Capacity,
+                                Status = updatedRoom.Status,
+                                Rate = updatedRoom.Rate,
+                                BedType = updatedRoom.BedType,
+                                Floor = updatedRoom.Floor
+                            }
+                        };
+                    }
+                    else
+                    {
+                        return new ApiResponse<RoomDetailDto>
+                        {
+                            Success = false,
+                            Message = "房间信息未发生变化"
+                        };
+                    }
+                }
+                else
+                {
+                    return new ApiResponse<RoomDetailDto>
+                    {
+                        Success = false,
+                        Message = "没有提供需要更新的字段"
+                    };
+                }
             }
             catch (Exception ex)
             {
