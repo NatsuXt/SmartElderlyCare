@@ -10,13 +10,11 @@ namespace RoomDeviceManagement.Services
     public class DeviceManagementService
     {
         private readonly ChineseCompatibleDatabaseService _chineseDbService;
-        private readonly DatabaseService _databaseService; // 临时保留用于其他方法
         private readonly ILogger<DeviceManagementService> _logger;
 
-        public DeviceManagementService(ChineseCompatibleDatabaseService chineseDbService, DatabaseService databaseService, ILogger<DeviceManagementService> logger)
+        public DeviceManagementService(ChineseCompatibleDatabaseService chineseDbService, ILogger<DeviceManagementService> logger)
         {
             _chineseDbService = chineseDbService;
-            _databaseService = databaseService;
             _logger = logger;
         }
 
@@ -34,18 +32,18 @@ namespace RoomDeviceManagement.Services
                 _logger.LogInformation($"   - Location: '{deviceDto.Location}' (长度: {deviceDto.Location?.Length})");
                 _logger.LogInformation($"   - Status: '{deviceDto.Status}' (长度: {deviceDto.Status?.Length})");
 
-                // 使用中文兼容数据库服务创建设备
+                // 使用中文兼容数据库服务创建设备，确保非空值
                 await _chineseDbService.CreateDeviceAsync(
-                    deviceDto.DeviceName, 
-                    deviceDto.DeviceType, 
+                    deviceDto.DeviceName ?? "未命名设备", 
+                    deviceDto.DeviceType ?? "未知类型", 
                     deviceDto.Location ?? "", 
-                    deviceDto.Status,
+                    deviceDto.Status ?? "正常",
                     deviceDto.LastMaintenanceDate ?? DateTime.Now,
                     DateTime.Now
                 );
 
                 // 通过设备名称获取新创建的设备
-                var createdDevice = await GetDeviceByNameAsync(deviceDto.DeviceName);
+                var createdDevice = await GetDeviceByNameAsync(deviceDto.DeviceName ?? "未命名设备");
                 if (createdDevice.Success)
                 {
                     createdDevice.Message = "设备创建成功";
@@ -191,8 +189,8 @@ namespace RoomDeviceManagement.Services
             {
                 _logger.LogInformation($"🔍 获取设备列表: 页码={request.Page}, 大小={request.PageSize}, 搜索='{request.Search}'");
                 
-                // 使用中文兼容数据库服务
-                var devices = await _chineseDbService.GetDevicesAsync(request.Search);
+                // 使用中文兼容数据库服务，确保搜索参数非空
+                var devices = await _chineseDbService.GetDevicesAsync(request.Search ?? "");
                 
                 // 手动分页
                 var totalCount = devices.Count;

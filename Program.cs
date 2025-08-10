@@ -1,88 +1,115 @@
 using RoomDeviceManagement.Services;
-using RoomDeviceManagement;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
+using Oracle.ManagedDataAccess.Client;
 
-// 🔧 在程序最开始设置Oracle 19c中文字符环境变量 - 确保在任何Oracle连接之前生效
-Environment.SetEnvironmentVariable("NLS_LANG", "SIMPLIFIED CHINESE_CHINA.AL32UTF8");
-Environment.SetEnvironmentVariable("ORA_NCHAR_LITERAL_REPLACE", "TRUE");
-Console.WriteLine("✅ Oracle 19c 中文字符环境变量已在程序启动时设置");
-
-// 🔧 Oracle 19c 中文字符环境初始化（附加确保）
-Oracle19cChineseTestHelper.InitializeOracleEnvironment();
-
-// 🔍 检查是否要运行诊断工具
-if (args.Length > 0 && args[0] == "diagnose")
+// 🔧 Oracle 19c 中文字符环境初始化 - 确保中文字符正确支持
+void InitializeChineseCharacterSupport()
 {
-    await RoomDeviceManagement.Services.ChineseDiagnosticTool.RunFullDiagnostic();
+    try
+    {
+        // 设置控制台编码为UTF-8
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
+        Console.InputEncoding = System.Text.Encoding.UTF8;
+        
+        // 设置Oracle环境变量以支持中文字符
+        Environment.SetEnvironmentVariable("NLS_LANG", "SIMPLIFIED CHINESE_CHINA.AL32UTF8");
+        Environment.SetEnvironmentVariable("ORA_NCHAR_LITERAL_REPLACE", "TRUE");
+        Environment.SetEnvironmentVariable("NLS_NCHAR", "AL32UTF8");
+        
+        Console.WriteLine("✅ Oracle 19c 中文字符环境初始化完成");
+        Console.WriteLine($"📝 NLS_LANG: {Environment.GetEnvironmentVariable("NLS_LANG")}");
+        Console.WriteLine($"📝 ORA_NCHAR_LITERAL_REPLACE: {Environment.GetEnvironmentVariable("ORA_NCHAR_LITERAL_REPLACE")}");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Oracle环境初始化失败: {ex.Message}");
+    }
+}
+
+// 在程序最开始初始化中文字符支持
+InitializeChineseCharacterSupport();
+
+// 🔍 API测试模式 - 简化版本
+if (args.Length > 0 && args[0] == "test-api")
+{
+    await TestAllApis();
     Console.WriteLine("\n按任意键退出...");
     Console.ReadKey();
     return;
 }
 
-// 🔍 检查是否要测试中文兼容服务
-if (args.Length > 0 && args[0] == "test-chinese")
+// API测试函数
+async Task TestAllApis()
 {
-    await RoomDeviceManagement.TestChineseService.RunTest();
-    return;
-}
-
-// 🔍 检查是否要测试健康监测服务
-if (args.Length > 0 && args[0] == "test-health")
-{
-    await RoomDeviceManagement.TestHealthMonitoringService.RunTest();
-    return;
-}
-
-// 🔍 检查是否要测试电子围栏服务
-if (args.Length > 0 && args[0] == "test-fence")
-{
-    await RoomDeviceManagement.TestElectronicFenceService.RunTest();
-    return;
-}
-
-// 🔍 检查是否要运行中文编码诊断
-if (args.Length > 0 && args[0] == "diagnose-encoding")
-{
-    await RoomDeviceManagement.ChineseEncodingDiagnostic.RunDiagnostic();
-    Console.WriteLine("\n按任意键退出...");
-    Console.ReadKey();
-    return;
-}
-
-// 🔍 检查是否要修复乱码数据
-if (args.Length > 0 && args[0] == "fix-encoding")
-{
-    await RoomDeviceManagement.ChineseEncodingDiagnostic.FixGarbledData();
-    Console.WriteLine("\n按任意键退出...");
-    Console.ReadKey();
-    return;
-}
-
-// 🔍 检查是否要修复中文数据
-if (args.Length > 0 && args[0] == "repair-chinese")
-{
-    await ChineseDataRepairTool.RepairChineseData();
-    Console.WriteLine("\n按任意键退出...");
-    Console.ReadKey();
-    return;
-}
-
-// 🔍 检查围栏表结构
-if (args.Length > 0 && args[0] == "check-fence-tables")
-{
-    await FenceTableCheck.CheckFenceTableStructure();
-    Console.WriteLine("\n按任意键退出...");
-    Console.ReadKey();
-    return;
-}
-
-// 🏥 检查是否要测试健康监测服务
-if (args.Length > 0 && args[0] == "test-health")
-{
-    await RoomDeviceManagement.TestHealthMonitoringService.RunTest();
-    return;
+    Console.WriteLine("🧪 开始API完整测试...");
+    var client = new HttpClient();
+    
+    try
+    {
+        // 测试房间管理API
+        Console.WriteLine("\n🏠 测试房间管理API");
+        
+        // 创建中文房间
+        var roomData = new {
+            RoomNumber = $"中文房间-{DateTime.Now:mmss}",
+            RoomType = "标准间",
+            Capacity = 2,
+            Status = "空闲",
+            Rate = 200.00m,
+            BedType = "单人床",
+            Floor = 3
+        };
+        
+        var roomJson = System.Text.Json.JsonSerializer.Serialize(roomData);
+        var roomContent = new StringContent(roomJson, System.Text.Encoding.UTF8, "application/json");
+        var roomResponse = await client.PostAsync("http://localhost:5000/api/RoomManagement/rooms", roomContent);
+        
+        if (roomResponse.IsSuccessStatusCode)
+        {
+            var result = await roomResponse.Content.ReadAsStringAsync();
+            Console.WriteLine($"✅ 房间创建成功: {result}");
+        }
+        else
+        {
+            Console.WriteLine($"❌ 房间创建失败: {roomResponse.StatusCode}");
+        }
+        
+        // 测试设备管理API
+        Console.WriteLine("\n📱 测试设备管理API");
+        
+        var deviceData = new {
+            DeviceName = $"中文设备-{DateTime.Now:mmss}",
+            DeviceType = "智能血压计",
+            InstallationDate = DateTime.Now,
+            Status = "正常运行",
+            Location = "一楼护士站",
+            Description = "支持中文的智能设备",
+            LastMaintenanceDate = DateTime.Now
+        };
+        
+        var deviceJson = System.Text.Json.JsonSerializer.Serialize(deviceData);
+        var deviceContent = new StringContent(deviceJson, System.Text.Encoding.UTF8, "application/json");
+        var deviceResponse = await client.PostAsync("http://localhost:5000/api/DeviceManagement/devices", deviceContent);
+        
+        if (deviceResponse.IsSuccessStatusCode)
+        {
+            var result = await deviceResponse.Content.ReadAsStringAsync();
+            Console.WriteLine($"✅ 设备创建成功: {result}");
+        }
+        else
+        {
+            Console.WriteLine($"❌ 设备创建失败: {deviceResponse.StatusCode}");
+        }
+        
+        Console.WriteLine("\n✅ API测试完成!");
+        
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ API测试异常: {ex.Message}");
+    }
 }
 
 var builder = WebApplication.CreateBuilder(args);
@@ -99,20 +126,15 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 注册服务
-builder.Services.AddScoped<DatabaseService>();
-builder.Services.AddScoped<ChineseCompatibleDatabaseService>(); // 🆕 新增中文兼容数据库服务
+// 注册核心服务 - 确保中文字符支持
+builder.Services.AddScoped<ChineseCompatibleDatabaseService>(); // 🆕 中文兼容数据库服务
+builder.Services.AddScoped<RoomManagementService>();
+builder.Services.AddScoped<DeviceManagementService>();
 builder.Services.AddScoped<ElectronicFenceService>();
 builder.Services.AddScoped<HealthMonitoringService>();
-// IoTMonitoringService 已移除，功能迁移到 DeviceManagementService
 
 // 注册后台服务
 builder.Services.AddHostedService<DeviceMonitoringBackgroundService>();
-
-// 注册数据管理相关服务
-builder.Services.AddScoped<RoomManagementService>();
-builder.Services.AddScoped<DeviceManagementService>();
-// FenceManagementService 和 FenceLogService 已合并到 ElectronicFenceService
 
 // 添加CORS支持
 builder.Services.AddCors(options =>
@@ -137,55 +159,45 @@ app.UseCors();
 app.UseAuthorization();
 app.MapControllers();
 
-Console.OutputEncoding = System.Text.Encoding.UTF8;
+// 🔧 配置中文字符数据库连接测试
+async Task TestChineseDatabaseConnection()
+{
+    try
+    {
+        var chineseDbService = new ChineseCompatibleDatabaseService(
+            Microsoft.Extensions.Logging.LoggerFactory.Create(builder => builder.AddConsole())
+                .CreateLogger<ChineseCompatibleDatabaseService>());
+        
+        Console.WriteLine("🔗 测试中文兼容数据库连接...");
+        
+        // 测试获取房间列表
+        var rooms = await chineseDbService.GetRoomsAsync("");
+        Console.WriteLine($"✅ 成功连接数据库，获取到 {rooms.Count} 个房间");
+        
+        if (rooms.Count > 0)
+        {
+            var firstRoom = rooms[0];
+            Console.WriteLine($"📋 示例房间: {firstRoom.RoomNumber} - {firstRoom.RoomType}");
+        }
+        
+        Console.WriteLine("数据库连接成功！");
+        Console.WriteLine("当前用户: APPLICATION_USER");
+        Console.WriteLine("📡 连接服务器：47.96.238.102:1521/orcl");
+        Console.WriteLine("👤 用户名：application_user");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ 数据库连接失败: {ex.Message}");
+    }
+}
+
 Console.WriteLine("===========================================");
 Console.WriteLine("智慧养老系统 - 房间与设备管理模块");
 Console.WriteLine("===========================================");
 Console.WriteLine();
 
-// 检查启动参数
-if (args.Length > 0 && args[0] == "--test-db")
-{
-    // 运行数据库调试测试
-    DatabaseDebugger.TestMultipleConnections();
-    return;
-}
-if (args.Length > 0 && args[0] == "--debug-db")
-{
-    // 运行数据库调试
-    await DatabaseDebugger.TestNetworkConnection();
-    DatabaseDebugger.TestMultipleConnections();
-    return;
-}
-
 // 测试数据库连接
-Console.WriteLine("🔗 测试数据库连接...");
-try
-{
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    if (string.IsNullOrEmpty(connectionString))
-    {
-        Console.WriteLine("❌ 数据库连接字符串未配置！");
-    }
-    else
-    {
-        var dbService = new DatabaseService(connectionString);
-        if (dbService.TestConnection())
-        {
-            Console.WriteLine("✅ 数据库连接成功！");
-            Console.WriteLine($"📡 连接服务器：47.96.238.102:1521/orcl");
-            Console.WriteLine($"👤 用户名：application_user");
-        }
-        else
-        {
-            Console.WriteLine("❌ 数据库连接失败！");
-        }
-    }
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"❌ 数据库连接失败！错误: {ex.Message}");
-}
+await TestChineseDatabaseConnection();
 
 Console.WriteLine();
 Console.WriteLine("🚀 智慧养老系统 - 房间与设备管理模块 API 服务已启动");

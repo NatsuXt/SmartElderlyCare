@@ -12,7 +12,7 @@ namespace RoomDeviceManagement.Services
     {
         private readonly ILogger<ChineseCompatibleDatabaseService> _logger;
         
-        // 🔑 使用与诊断工具完全相同的连接字符串
+        // 🔑 使用支持中文字符的连接字符串
         private const string ConnectionString = "Data Source=47.96.238.102:1521/orcl;User Id=application_user;Password=20252025;Connection Timeout=30;Pooling=false;";
 
         public ChineseCompatibleDatabaseService(ILogger<ChineseCompatibleDatabaseService> logger)
@@ -54,13 +54,18 @@ namespace RoomDeviceManagement.Services
 
                 using var command = new OracleCommand(sql, connection);
                 
-                // 🔑 关键：使用NVarchar2参数类型处理中文字符
-                command.Parameters.Add(":roomNumber", OracleDbType.NVarchar2).Value = roomNumber;
-                command.Parameters.Add(":roomType", OracleDbType.NVarchar2).Value = roomType;
+                // 🔑 关键：使用NVarchar2参数类型处理中文字符，明确指定大小
+                var roomNumberParam = new OracleParameter(":roomNumber", OracleDbType.NVarchar2, 100) { Value = roomNumber };
+                var roomTypeParam = new OracleParameter(":roomType", OracleDbType.NVarchar2, 100) { Value = roomType };
+                var statusParam = new OracleParameter(":status", OracleDbType.NVarchar2, 50) { Value = status };
+                var bedTypeParam = new OracleParameter(":bedType", OracleDbType.NVarchar2, 100) { Value = bedType };
+                
+                command.Parameters.Add(roomNumberParam);
+                command.Parameters.Add(roomTypeParam);
                 command.Parameters.Add(":capacity", OracleDbType.Int32).Value = capacity;
-                command.Parameters.Add(":status", OracleDbType.NVarchar2).Value = status;
+                command.Parameters.Add(statusParam);
                 command.Parameters.Add(":rate", OracleDbType.Decimal).Value = rate;
-                command.Parameters.Add(":bedType", OracleDbType.NVarchar2).Value = bedType;
+                command.Parameters.Add(bedTypeParam);
                 command.Parameters.Add(":floor", OracleDbType.Int32).Value = floor;
 
                 var rowsAffected = await command.ExecuteNonQueryAsync();
@@ -640,11 +645,16 @@ namespace RoomDeviceManagement.Services
 
                 using var command = new OracleCommand(sql, connection);
                 
-                // 使用NVarchar2参数类型确保中文字符正确处理
-                command.Parameters.Add(new OracleParameter("deviceName", OracleDbType.NVarchar2) { Value = deviceName });
-                command.Parameters.Add(new OracleParameter("deviceType", OracleDbType.NVarchar2) { Value = deviceType });
-                command.Parameters.Add(new OracleParameter("location", OracleDbType.NVarchar2) { Value = location });
-                command.Parameters.Add(new OracleParameter("status", OracleDbType.NVarchar2) { Value = status });
+                // 使用NVarchar2参数类型确保中文字符正确处理，明确指定大小
+                var deviceNameParam = new OracleParameter("deviceName", OracleDbType.NVarchar2, 200) { Value = deviceName };
+                var deviceTypeParam = new OracleParameter("deviceType", OracleDbType.NVarchar2, 100) { Value = deviceType };
+                var locationParam = new OracleParameter("location", OracleDbType.NVarchar2, 200) { Value = location };
+                var statusParam = new OracleParameter("status", OracleDbType.NVarchar2, 50) { Value = status };
+                
+                command.Parameters.Add(deviceNameParam);
+                command.Parameters.Add(deviceTypeParam);
+                command.Parameters.Add(locationParam);
+                command.Parameters.Add(statusParam);
                 command.Parameters.Add(new OracleParameter("lastMaintenanceDate", OracleDbType.Date) { Value = lastMaintenanceDate });
                 command.Parameters.Add(new OracleParameter("installationDate", OracleDbType.Date) { Value = installationDate });
 
