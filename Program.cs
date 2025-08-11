@@ -91,7 +91,7 @@ async Task TestAllApis()
         
         var deviceJson = System.Text.Json.JsonSerializer.Serialize(deviceData);
         var deviceContent = new StringContent(deviceJson, System.Text.Encoding.UTF8, "application/json");
-        var deviceResponse = await client.PostAsync("http://localhost:5000/api/DeviceManagement/devices", deviceContent);
+        var deviceResponse = await client.PostAsync("http://localhost:5000/api/DeviceManagement", deviceContent);
         
         if (deviceResponse.IsSuccessStatusCode)
         {
@@ -114,6 +114,17 @@ async Task TestAllApis()
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 🔧 配置生产环境设置
+if (builder.Environment.IsProduction())
+{
+    builder.Configuration.AddJsonFile("appsettings.Production.json", optional: false, reloadOnChange: true);
+}
+
+// 获取服务器配置
+var serverConfig = builder.Configuration.GetSection("ServerConfig");
+var baseUrl = serverConfig["BaseUrl"] ?? "http://localhost:5000";
+var apiPort = serverConfig.GetValue<int>("ApiPort", 5000);
+
 // 添加服务到容器
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -124,7 +135,22 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.WriteIndented = true;
     });
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "智慧养老系统 API",
+        Version = "v1",
+        Description = "房间与设备管理模块 - 支持中文字符"
+    });
+    
+    // 配置服务器地址 - 根据配置文件动态设置
+    c.AddServer(new Microsoft.OpenApi.Models.OpenApiServer
+    {
+        Url = baseUrl,
+        Description = builder.Environment.IsProduction() ? "生产服务器" : "本地开发服务器"
+    });
+});
 
 // 注册核心服务 - 确保中文字符支持
 builder.Services.AddScoped<ChineseCompatibleDatabaseService>(); // 🆕 中文兼容数据库服务
@@ -152,7 +178,12 @@ var app = builder.Build();
 // 配置HTTP请求管道
 // 在所有环境中启用Swagger以便测试API
 app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "智慧养老系统 API v1");
+    c.RoutePrefix = "swagger";
+    c.DocumentTitle = "智慧养老系统 API 文档";
+});
 
 app.UseCors();
 // app.UseHttpsRedirection(); // 暂时禁用HTTPS重定向便于测试
@@ -219,4 +250,5 @@ Console.WriteLine("   🌐 IoT监控：设备轮询、故障上报、状态同�
 Console.WriteLine();
 Console.WriteLine("📊 后台服务：设备状态自动轮询检查 (5分钟间隔)");
 Console.WriteLine();
+
 app.Run();

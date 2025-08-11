@@ -1,4 +1,4 @@
-# 智慧养老系统 - 房间与设备管理模块
+﻿# 智慧养老系统 - 房间与设备管理模块
 
 [![.NET](https://img.shields.io/badge/.NET-8.0-blue.svg)](https://dotnet.microsoft.com/)
 [![Oracle](https://img.shields.io/badge/Oracle-18c-red.svg)](https://www.oracle.com/)
@@ -12,6 +12,8 @@
 
 - **后端框架**: ASP.NET Core 8.0 Web API
 - **数据库**: Oracle 18c (47.96.238.102:1521/orcl)
+- **API服务**: http://localhost:5000
+- **API文档**: http://localhost:5000/swagger
 - **ORM**: Oracle.ManagedDataAccess
 - **API文档**: Swagger/OpenAPI
 - **架构模式**: MVC + Service Layer + Repository Pattern
@@ -158,7 +160,7 @@ dotnet run
 
 5. **访问API文档**
 ```
-http://localhost:5000/swagger
+http://47.96.238.102:5000/swagger
 ```
 
 ### 数据库测试
@@ -214,7 +216,7 @@ curl -X GET "http://localhost:5000/api/DeviceManagement/devices?page=1&pageSize=
 ### 上报健康数据
 
 ```bash
-curl -X POST "http://localhost:5000/api/health-monitoring/data-report" \
+curl -X POST "http://localhost:5000/api/HealthMonitoring/report" \
 -H "Content-Type: application/json" \
 -d '{
   "elderlyId": 1,
