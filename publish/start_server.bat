@@ -43,11 +43,16 @@ if not exist "RoomDeviceManagement.dll" (
 )
 
 echo 启动智慧养老系统...
-echo 访问地址: http://47.96.238.102:8080/swagger
+echo 服务器地址: 47.96.238.102
+echo 预期访问地址: http://47.96.238.102:8080/swagger
+echo 注意: 如果8080端口被占用，应用可能会自动选择其他端口
 echo 按 Ctrl+C 停止服务
 echo.
 
-REM 启动应用
+REM 启动应用并显示详细输出
+echo 正在启动应用...
 dotnet RoomDeviceManagement.dll
 
+echo.
+echo 应用已停止
 pause

@@ -32,8 +32,14 @@
 - `start_server.ps1` (PowerShell版本)
 - `start_server.bat` (批处理版本)
 
-### 4. 验证部署
-访问: http://47.96.238.102:8080/swagger
+### 4. 端口和访问地址检测
+如果无法通过 http://47.96.238.102:8080/swagger 访问，请运行:
+- `find_swagger.ps1` - 自动发现实际运行端口
+- `network_check.bat` - 检查网络和端口状态
+- `test_api_server.ps1` - 测试所有API端点
+
+### 5. 验证部署
+使用发现的实际端口访问Swagger文档
 
 ## ⚠️ 重要提示
 
