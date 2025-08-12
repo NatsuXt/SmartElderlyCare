@@ -42,3 +42,8 @@ E:\MyTest\database_keshe\obj\Release\net8.0\RoomDeviceManagement.pdb
 E:\MyTest\database_keshe\obj\Release\net8.0\RoomDeviceManagement.genruntimeconfig.cache
 E:\MyTest\database_keshe\obj\Release\net8.0\ref\RoomDeviceManagement.dll
 E:\MyTest\database_keshe\bin\Release\net8.0\appsettings.Production.json
+E:\MyTest\database_keshe\bin\Release\net8.0\publish\web.config
+E:\MyTest\database_keshe\bin\Release\net8.0\publish\appsettings.json
+E:\MyTest\database_keshe\bin\Release\net8.0\publish\appsettings.Production.json
+E:\MyTest\database_keshe\bin\Release\net8.0\publish\RoomDeviceManagement.deps.json
+E:\MyTest\database_keshe\bin\Release\net8.0\publish\RoomDeviceManagement.runtimeconfig.json

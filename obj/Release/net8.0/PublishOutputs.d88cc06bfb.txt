@@ -1,6 +1,11 @@
 E:\MyTest\database_keshe\publish\RoomDeviceManagement.exe
+E:\MyTest\database_keshe\publish\publish\web.config
 E:\MyTest\database_keshe\publish\appsettings.json
 E:\MyTest\database_keshe\publish\appsettings.Production.json
+E:\MyTest\database_keshe\publish\publish\appsettings.json
+E:\MyTest\database_keshe\publish\publish\appsettings.Production.json
+E:\MyTest\database_keshe\publish\publish\RoomDeviceManagement.deps.json
+E:\MyTest\database_keshe\publish\publish\RoomDeviceManagement.runtimeconfig.json
 E:\MyTest\database_keshe\publish\RoomDeviceManagement.dll
 E:\MyTest\database_keshe\publish\RoomDeviceManagement.deps.json
 E:\MyTest\database_keshe\publish\RoomDeviceManagement.runtimeconfig.json

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RoomDeviceManagement")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0467c1d1adfc3c28f10ce2398934361a7fec4ffa")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+05542ed48baf79abc2945e879e5db3257609f2f8")]
 [assembly: System.Reflection.AssemblyProductAttribute("RoomDeviceManagement")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RoomDeviceManagement")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

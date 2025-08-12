@@ -34,14 +34,14 @@ InitializeChineseCharacterSupport();
 // 🔍 API测试模式 - 简化版本
 if (args.Length > 0 && args[0] == "test-api")
 {
-    await TestAllApis();
+    await TestAllApis("http://localhost:5000"); // 测试模式使用localhost
     Console.WriteLine("\n按任意键退出...");
     Console.ReadKey();
     return;
 }
 
 // API测试函数
-async Task TestAllApis()
+async Task TestAllApis(string testBaseUrl = "http://localhost:5000")
 {
     Console.WriteLine("🧪 开始API完整测试...");
     var client = new HttpClient();
@@ -64,7 +64,7 @@ async Task TestAllApis()
         
         var roomJson = System.Text.Json.JsonSerializer.Serialize(roomData);
         var roomContent = new StringContent(roomJson, System.Text.Encoding.UTF8, "application/json");
-        var roomResponse = await client.PostAsync("http://localhost:5000/api/RoomManagement/rooms", roomContent);
+        var roomResponse = await client.PostAsync($"{testBaseUrl}/api/RoomManagement/rooms", roomContent);
         
         if (roomResponse.IsSuccessStatusCode)
         {
@@ -91,7 +91,7 @@ async Task TestAllApis()
         
         var deviceJson = System.Text.Json.JsonSerializer.Serialize(deviceData);
         var deviceContent = new StringContent(deviceJson, System.Text.Encoding.UTF8, "application/json");
-        var deviceResponse = await client.PostAsync("http://localhost:5000/api/DeviceManagement", deviceContent);
+        var deviceResponse = await client.PostAsync($"{testBaseUrl}/api/DeviceManagement", deviceContent);
         
         if (deviceResponse.IsSuccessStatusCode)
         {
@@ -122,8 +122,8 @@ if (builder.Environment.IsProduction())
 
 // 获取服务器配置
 var serverConfig = builder.Configuration.GetSection("ServerConfig");
-var baseUrl = serverConfig["BaseUrl"] ?? "http://localhost:5000";
-var apiPort = serverConfig.GetValue<int>("ApiPort", 5000);
+var baseUrl = serverConfig["BaseUrl"] ?? "http://localhost:3003";
+var apiPort = serverConfig.GetValue<int>("ApiPort", 3003);
 
 // 添加服务到容器
 builder.Services.AddControllers()
@@ -232,7 +232,7 @@ await TestChineseDatabaseConnection();
 
 Console.WriteLine();
 Console.WriteLine("🚀 智慧养老系统 - 房间与设备管理模块 API 服务已启动");
-Console.WriteLine("📍 API文档地址：http://localhost:5000/swagger");
+Console.WriteLine($"📍 API文档地址：{baseUrl}/swagger");
 Console.WriteLine();
 Console.WriteLine("📌 主要业务 API 模块：");
 Console.WriteLine("   设备管理：/api/DeviceManagement/* (6个端点)");
@@ -250,5 +250,14 @@ Console.WriteLine("   🌐 IoT监控：设备轮询、故障上报、状态同�
 Console.WriteLine();
 Console.WriteLine("📊 后台服务：设备状态自动轮询检查 (5分钟间隔)");
 Console.WriteLine();
+
+// 🌐 配置应用监听所有IP地址，支持外部访问
+var port = serverConfig.GetValue<int>("ApiPort", 3003);
+var urls = $"http://*:{port}";
+Console.WriteLine($"🌐 启动服务器监听: {urls}");
+Console.WriteLine($"📍 外部访问地址: http://47.96.238.102:{port}/swagger");
+
+app.Urls.Clear();
+app.Urls.Add(urls);
 
 app.Run();
