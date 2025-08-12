@@ -36,9 +36,16 @@ System.Configuration.ConfigurationManager.dll - 配置管理
 ### 启动脚本 (推荐使用顺序)
 ```
 1. start_server_safe.bat         - 安全启动脚本 (首选)
-2. start_server_fixed.ps1        - PowerShell启动脚本
+2. start_server_fixed.ps1        - PowerShell启动脚本 (推荐)
 3. start_server.bat              - 基础启动脚本
-4. start_server.ps1              - 标准PowerShell脚本
+```
+
+### 测试脚本
+```
+safe-test.ps1                    - 一键安全测试（推荐使用）
+unicode-chinese-test.ps1         - 中文字符API测试
+simple-test.ps1                  - 基础API测试脚本
+test_api_server.ps1              - 完整API端点测试
 ```
 
 ### 诊断工具
@@ -46,12 +53,12 @@ System.Configuration.ConfigurationManager.dll - 配置管理
 network_check.bat                - 网络连接检查
 find_swagger.ps1                 - API文档定位工具
 kill_port_5000.bat              - 端口清理工具 (支持3003端口)
-test_api_server.ps1              - API服务器测试脚本
 ```
 
-### 权限设置
+### 前端集成资源
 ```
-setup_permissions.bat            - PowerShell执行权限设置
+前端测试脚本_中文字符.js         - JavaScript测试示例
+前端集成指南_中文字符支持.md      - 前端开发指南
 ```
 
 ### 文档资料
