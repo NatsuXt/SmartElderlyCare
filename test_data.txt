@@ -105,7 +105,6 @@
       "emergencyContact": "李娜 13700137001"
     },
     "assessment": {
-      "elderlyId": 3,
       "assessmentDate": "2025-07-22T08:45:00Z",
       "physicalHealthFunction": 6,
       "psychologicalFunction": 6,
@@ -113,7 +112,6 @@
       "healthGrade": "一般"
     },
     "monitoring": {
-      "elderlyId": 3,
       "monitoringDate": "2025-07-22T08:45:00Z",
       "heartRate": 78,
       "bloodPressure": "125/82",
@@ -123,7 +121,6 @@
     },
     "families": [
       {
-        "elderlyId": 3,
         "name": "李娜",
         "relationship": "女儿",
         "contactPhone": "13700137001",
@@ -359,10 +356,11 @@
         "contactPhone": "13900008888",
         "contactEmail": "zhaojun@example.com",
         "address": "深圳市南山区科技园1号",
-        "isPrimaryContact": "是"
+        "isPrimaryContact": "Y"
       }
     ]
-  },
+  }
+  ,
   {
     "elderly": {
       "name": "孙磊",
@@ -395,16 +393,15 @@
         "contactPhone": "13800001112",
         "contactEmail": "sunhua@example.com",
         "address": "成都市武侯区人民南路10号",
-        "isPrimaryContact": "是"
+        "isPrimaryContact": "Y"
       }
     ]
   }
 ]
 
-
 {
-  "familyName": "string",
-  "contactPhone": "string",
-  "elderlyName": "string",
-  "elderlyIdCardNumber": "string"
+  "familyName": "孙华",
+  "contactPhone": "13800001112",
+  "elderlyName": "孙磊",
+  "elderlyIdCardNumber": "110101195501185432"
 }

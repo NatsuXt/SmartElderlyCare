@@ -1,12 +1,15 @@
 using ElderlyCareSystem.Data;
 using ElderlyCareSystem.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.JsonPatch;
 
+using Microsoft.AspNetCore.Mvc;  // 基础 MVC
+using Microsoft.Extensions.DependencyInjection; // IServiceCollection 扩展方法
 var builder = WebApplication.CreateBuilder(args);
-builder.WebHost.UseUrls("http://localhost:5209");  // 指定监听端口
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseOracle(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 
 // 2. 注入 CheckInService
 builder.Services.AddScoped<ElderlyFullRegistrationService>();
@@ -17,6 +20,8 @@ builder.Services.AddScoped<DietRecommendationService>();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<QianfanService>();
 builder.Services.AddScoped<DietRecommendationService>();
+builder.Services.AddScoped<ElderlyInfoService>();
+
 builder.Services.AddSwaggerGen(c =>
 {
     var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -41,7 +46,12 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 }
 
 //app.UseHttpsRedirection();
-
+// 默认页面跳转到 Swagger
+app.MapGet("/", context =>
+{
+    context.Response.Redirect("/swagger");
+    return Task.CompletedTask;
+});
 app.UseAuthorization();
 
 app.MapControllers();
