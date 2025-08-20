@@ -18,6 +18,7 @@ namespace ElderlyCareSystem.Data
         public DbSet<MedicalOrder> MedicalOrders { get; set; }
         public DbSet<NursingPlan> NursingPlans { get; set; }
         public DbSet<FeeSettlement> FeeSettlements { get; set; }
+        public DbSet<FeeDetail> FeeDetails { get; set; }
         public DbSet<ActivityParticipation> ActivityParticipations { get; set; }
         public DbSet<DietRecommendation> DietRecommendations { get; set; }
         public DbSet<EmergencySOS> EmergencySOSs { get; set; }
@@ -29,10 +30,15 @@ namespace ElderlyCareSystem.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // === 表映射 ===
             modelBuilder.Entity<HealthAssessmentReport>()
-        .ToTable("HEALTHASSESSMENTREPORT", schema: "SYS");
+                .ToTable("HEALTHASSESSMENTREPORT", schema: "SYS");
             modelBuilder.Entity<MedicalOrder>()
-    .ToTable("MEDICALORDER", schema: "SYS");
+                .ToTable("MEDICALORDER", schema: "SYS");
+            modelBuilder.Entity<HealthThreshold>()
+                .ToTable("HEALTHTHRESHOLD");
+            modelBuilder.Entity<VoiceAssistantReminder>()
+                .ToTable("VOICEASSISTANTREMINDER");
 
             // === FamilyInfo 外键关联 ElderlyInfo ===
             modelBuilder.Entity<FamilyInfo>()
@@ -69,34 +75,47 @@ namespace ElderlyCareSystem.Data
                 .HasForeignKey(e => e.ElderlyId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // === ActivityParticipation 外键 ElderlyInfo（注意：还有 activity_id，此处简化处理）===
+            // === ActivityParticipation 外键关联 ElderlyInfo ===
             modelBuilder.Entity<ActivityParticipation>()
                 .HasOne(a => a.Elderly)
                 .WithMany(e => e.ActivityParticipations)
                 .HasForeignKey(a => a.ElderlyId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // 其它表的关系如 MedicalOrder、NursingPlan、FeeSettlement 可根据是否需要导航属性补充
+            // === FeeSettlement 与 ElderlyInfo ===
+            modelBuilder.Entity<FeeSettlement>()
+                .HasOne(f => f.Elderly)
+                .WithMany(e => e.FeeSettlements)
+                .HasForeignKey(f => f.ElderlyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // === FeeDetail 与 FeeSettlement ===
+            modelBuilder.Entity<FeeDetail>()
+                .HasOne(fd => fd.FeeSettlement)
+                .WithMany(fs => fs.FeeDetails)
+                .HasForeignKey(fd => fd.FeeSettlementId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // === HealthAlert 外键关联 ElderlyInfo ===
             modelBuilder.Entity<HealthAlert>()
                 .HasOne(h => h.Elderly)
-                .WithMany() // 如果 ElderlyInfo 中没有导航属性，可以留空
+                .WithMany(e => e.HealthAlerts)
                 .HasForeignKey(h => h.ElderlyId)
-                .OnDelete(DeleteBehavior.NoAction); // NO ACTION 表示不级联删除
+                .OnDelete(DeleteBehavior.Cascade);
 
             // === HealthThreshold 外键关联 ElderlyInfo ===
             modelBuilder.Entity<HealthThreshold>()
-                .HasOne(h => h.Elderly)
-                .WithMany()
-                .HasForeignKey(h => h.ElderlyId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .HasOne(ht => ht.Elderly)
+                .WithMany(e => e.HealthThresholds)
+                .HasForeignKey(ht => ht.ElderlyId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // === VoiceAssistantReminder 外键关联 ElderlyInfo ===
             modelBuilder.Entity<VoiceAssistantReminder>()
-                .HasOne(v => v.Elderly)
-                .WithMany()
-                .HasForeignKey(v => v.ElderlyId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .HasOne(r => r.Elderly)
+                .WithMany(e => e.VoiceAssistantReminders)
+                .HasForeignKey(r => r.ElderlyId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             base.OnModelCreating(modelBuilder);
         }

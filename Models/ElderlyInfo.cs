@@ -82,7 +82,7 @@ namespace ElderlyCareSystem.Models
         public ElderlyInfo Elderly { get; set; } = null!;
     }
 
-    [Table("HEALTH_THRESHOLD")]
+    [Table("HEALTHTHRESHOLD")]
     public class HealthThreshold
     {
         [Key]
@@ -112,7 +112,7 @@ namespace ElderlyCareSystem.Models
         public ElderlyInfo Elderly { get; set; } = null!;
     }
 
-    [Table("VOICE_ASSISTANT_REMINDER")]
+    [Table("VOICEASSISTANTREMINDER")]
     public class VoiceAssistantReminder
     {
         [Key]
@@ -141,7 +141,45 @@ namespace ElderlyCareSystem.Models
         [ForeignKey(nameof(ElderlyId))]
         public ElderlyInfo Elderly { get; set; } = null!;
     }
+    [Table("FEEDETAIL")]
+    public class FeeDetail
+    {
+        [Key]
+        [Column("ID")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
 
+        [Column("FEE_SETTLEMENT_ID")]
+        [ForeignKey(nameof(FeeSettlement))]
+        public int FeeSettlementId { get; set; }
+
+        [Required]
+        [Column("FEE_TYPE", TypeName = "NVARCHAR2(50)")]
+        public string FeeType { get; set; } = string.Empty;
+
+        [Required]
+        [Column("DESCRIPTION", TypeName = "NVARCHAR2(200)")]
+        public string Description { get; set; } = string.Empty;
+
+        [Required]
+        [Column("AMOUNT", TypeName = "NUMBER(18,2)")]
+        public decimal Amount { get; set; }
+
+        [Column("START_DATE", TypeName = "DATE")]
+        public DateTime? StartDate { get; set; }
+
+        [Column("END_DATE", TypeName = "DATE")]
+        public DateTime? EndDate { get; set; }
+
+        [Column("QUANTITY")]
+        public int? Quantity { get; set; }
+
+        [Column("UNIT_PRICE", TypeName = "NUMBER(18,2)")]
+        public decimal? UnitPrice { get; set; }
+
+        // 导航属性
+        public FeeSettlement FeeSettlement { get; set; } = null!;
+    }
 
 }
 

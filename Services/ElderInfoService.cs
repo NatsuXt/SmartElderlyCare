@@ -103,25 +103,77 @@ namespace ElderlyCareSystem.Services
             var elderly = await _context.ElderlyInfos.FindAsync(elderlyId);
             if (elderly == null) return false;
 
-            // 删除所有相关信息
-            _context.FamilyInfos.RemoveRange(_context.FamilyInfos.Where(f => f.ElderlyId == elderlyId));
-            _context.HealthMonitorings.RemoveRange(_context.HealthMonitorings.Where(h => h.ElderlyId == elderlyId));
-            _context.HealthAssessmentReports.RemoveRange(_context.HealthAssessmentReports.Where(h => h.ElderlyId == elderlyId));
-            _context.MedicalOrders.RemoveRange(_context.MedicalOrders.Where(m => m.ElderlyId == elderlyId));
-            _context.NursingPlans.RemoveRange(_context.NursingPlans.Where(n => n.ElderlyId == elderlyId));
-            _context.FeeSettlements.RemoveRange(_context.FeeSettlements.Where(f => f.ElderlyId == elderlyId));
-            _context.ActivityParticipations.RemoveRange(_context.ActivityParticipations.Where(a => a.ElderlyId == elderlyId));
-            _context.DietRecommendations.RemoveRange(_context.DietRecommendations.Where(d => d.ElderlyId == elderlyId));
-            _context.EmergencySOSs.RemoveRange(_context.EmergencySOSs.Where(e => e.ElderlyId == elderlyId));
-            _context.HealthAlerts.RemoveRange(_context.HealthAlerts.Where(h => h.ElderlyId == elderlyId));
-            _context.HealthThresholds.RemoveRange(_context.HealthThresholds.Where(h => h.ElderlyId == elderlyId));
-            _context.VoiceAssistantReminders.RemoveRange(_context.VoiceAssistantReminders.Where(v => v.ElderlyId == elderlyId));
+            // 1. 删除依赖 MedicalOrders 的 VoiceAssistantReminders
+            await _context.VoiceAssistantReminders
+                .Where(v => v.ElderlyId == elderlyId)
+                .ExecuteDeleteAsync();
 
-            // 删除老人自身
+            // 2. 删除 MedicalOrders
+            await _context.MedicalOrders
+                .Where(m => m.ElderlyId == elderlyId)
+                .ExecuteDeleteAsync();
+
+            // 3. 删除其他直接依赖 ElderlyInfo 的表
+            await _context.ActivityParticipations
+                .Where(a => a.ElderlyId == elderlyId)
+                .ExecuteDeleteAsync();
+
+            await _context.DietRecommendations
+                .Where(d => d.ElderlyId == elderlyId)
+                .ExecuteDeleteAsync();
+
+            await _context.EmergencySOSs
+                .Where(e => e.ElderlyId == elderlyId)
+                .ExecuteDeleteAsync();
+
+            await _context.HealthAlerts
+                .Where(h => h.ElderlyId == elderlyId)
+                .ExecuteDeleteAsync();
+
+            await _context.HealthThresholds
+                .Where(h => h.ElderlyId == elderlyId)
+                .ExecuteDeleteAsync();
+
+            await _context.HealthMonitorings
+                .Where(h => h.ElderlyId == elderlyId)
+                .ExecuteDeleteAsync();
+
+            await _context.HealthAssessmentReports
+                .Where(h => h.ElderlyId == elderlyId)
+                .ExecuteDeleteAsync();
+
+            await _context.NursingPlans
+                .Where(n => n.ElderlyId == elderlyId)
+                .ExecuteDeleteAsync();
+
+            await _context.FamilyInfos
+                .Where(f => f.ElderlyId == elderlyId)
+                .ExecuteDeleteAsync();
+
+            // 4. 删除 FeeDetails 与 FeeSettlements
+            var feeSettlementIds = await _context.FeeSettlements
+                .Where(f => f.ElderlyId == elderlyId)
+                .Select(f => f.SettlementId)
+                .ToListAsync();
+
+            if (feeSettlementIds.Any())
+            {
+                await _context.FeeDetails
+                    .Where(fd => feeSettlementIds.Contains(fd.FeeSettlementId))
+                    .ExecuteDeleteAsync();
+
+                await _context.FeeSettlements
+                    .Where(f => f.ElderlyId == elderlyId)
+                    .ExecuteDeleteAsync();
+            }
+
+            // 5. 删除 ElderlyInfo 本身
             _context.ElderlyInfos.Remove(elderly);
 
             await _context.SaveChangesAsync();
             return true;
         }
+
+
     }
 }

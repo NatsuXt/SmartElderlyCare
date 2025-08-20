@@ -37,5 +37,8 @@ namespace ElderlyCareSystem.Models
         public int StaffId { get; set; }
 
         public ElderlyInfo Elderly { get; set; }
+
+        public ICollection<FeeDetail> FeeDetails { get; set; }
+
     }
 }
