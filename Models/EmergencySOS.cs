@@ -27,7 +27,7 @@ namespace ElderlyCareSystem.Models
         [Column("RESPONSE_TIME")]
         public DateTime? ResponseTime { get; set; }
 
-        [Column("RESPONSE_STAFF")]
+        [Column("RESPONSE_STAFF_ID")]
         public int? ResponseStaff { get; set; }
 
         [Column("FOLLOW_UP_REQUIRED"), MaxLength(1)]
