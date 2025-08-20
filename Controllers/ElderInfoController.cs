@@ -44,12 +44,15 @@ namespace ElderlyCareSystem.Controllers
         }
 
         /// <summary>
-        /// 修改老人信息的指定属性
-        /// PATCH api/ElderlyInfo/1?propertyName=IdCardNumber&value=110105194712051234
+        /// 修改老人属性
         /// </summary>
+        /// <param name="elderlyId">老人ID</param>
+        /// <param name="propertyName">属性名称，可以填写Name、Gender、BirthDate、IdCardNumber、ContactPhone、Address、EmergencyContact</param>
+        /// <param name="value">属性值</param>
+        /// <returns>操作结果</returns>
         [HttpPatch("{elderlyId}")]
         public async Task<IActionResult> UpdateProperty(
-    int elderlyId, [FromQuery] string propertyName, [FromQuery] string value)
+            int elderlyId, [FromQuery] string propertyName, [FromQuery] string value)
         {
             if (string.IsNullOrEmpty(propertyName))
                 return BadRequest("请提供 propertyName");
@@ -60,6 +63,7 @@ namespace ElderlyCareSystem.Controllers
 
             return Ok("修改成功");
         }
+
 
 
 
