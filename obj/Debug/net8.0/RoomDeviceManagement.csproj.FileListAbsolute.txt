@@ -72,12 +72,9 @@ E:\MyTest\database_keshe\obj\Debug\net8.0\refint\RoomDeviceManagement.dll
 E:\MyTest\database_keshe\obj\Debug\net8.0\RoomDeviceManagement.pdb
 E:\MyTest\database_keshe\obj\Debug\net8.0\RoomDeviceManagement.genruntimeconfig.cache
 E:\MyTest\database_keshe\obj\Debug\net8.0\ref\RoomDeviceManagement.dll
-E:\MyTest\database_keshe\bin\Debug\net8.0\publish\publish\web.config
 E:\MyTest\database_keshe\bin\Debug\net8.0\publish\web.config
 E:\MyTest\database_keshe\bin\Debug\net8.0\publish\appsettings.json
 E:\MyTest\database_keshe\bin\Debug\net8.0\publish\appsettings.Production.json
-E:\MyTest\database_keshe\bin\Debug\net8.0\publish\publish\appsettings.json
-E:\MyTest\database_keshe\bin\Debug\net8.0\publish\publish\RoomDeviceManagement.deps.json
-E:\MyTest\database_keshe\bin\Debug\net8.0\publish\publish\RoomDeviceManagement.runtimeconfig.json
 E:\MyTest\database_keshe\bin\Debug\net8.0\publish\RoomDeviceManagement.deps.json
 E:\MyTest\database_keshe\bin\Debug\net8.0\publish\RoomDeviceManagement.runtimeconfig.json
+E:\MyTest\database_keshe\bin\Debug\net8.0\appsettings.Production.json

@@ -405,14 +405,28 @@ namespace RoomDeviceManagement.Services
                     };
                 }
 
-                // 这里需要在ChineseCompatibleDatabaseService中添加删除方法
-                // 暂时返回未实现消息
-                return new ApiResponse<bool>
+                // 调用数据库服务删除房间
+                var deletedRows = await _chineseDbService.DeleteRoomAsync(roomId);
+                
+                if (deletedRows > 0)
                 {
-                    Success = false,
-                    Message = "删除功能正在开发中，请稍后再试",
-                    Data = false
-                };
+                    _logger.LogInformation($"✅ 成功删除房间: ID={roomId}");
+                    return new ApiResponse<bool>
+                    {
+                        Success = true,
+                        Message = "房间删除成功",
+                        Data = true
+                    };
+                }
+                else
+                {
+                    return new ApiResponse<bool>
+                    {
+                        Success = false,
+                        Message = "房间删除失败，没有找到对应记录",
+                        Data = false
+                    };
+                }
             }
             catch (Exception ex)
             {

@@ -749,6 +749,48 @@ namespace RoomDeviceManagement.Services
         }
 
         /// <summary>
+        /// 删除房间 - 中文兼容版本
+        /// </summary>
+        public async Task<int> DeleteRoomAsync(int roomId)
+        {
+            try
+            {
+                _logger.LogInformation($"🗑️ 中文兼容服务删除房间: {roomId}");
+
+                using var connection = new OracleConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                // 检查房间是否存在
+                var checkSql = "SELECT COUNT(*) FROM RoomManagement WHERE room_id = :roomId";
+                using var checkCommand = new OracleCommand(checkSql, connection);
+                checkCommand.Parameters.Add(new OracleParameter("roomId", OracleDbType.Int32) { Value = roomId });
+                
+                var exists = Convert.ToInt32(await checkCommand.ExecuteScalarAsync()) > 0;
+                if (!exists)
+                {
+                    _logger.LogWarning($"⚠️ 中文兼容服务: 房间 {roomId} 不存在");
+                    return 0;
+                }
+
+                // 执行删除操作
+                var deleteSql = "DELETE FROM RoomManagement WHERE room_id = :roomId";
+                using var deleteCommand = new OracleCommand(deleteSql, connection);
+                deleteCommand.Parameters.Add(new OracleParameter("roomId", OracleDbType.Int32) { Value = roomId });
+
+                var result = await deleteCommand.ExecuteNonQueryAsync();
+                
+                _logger.LogInformation($"✅ 中文兼容服务成功删除房间: {roomId}, 影响行数={result}");
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ 中文兼容服务删除房间失败: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
         /// 获取设备统计信息 - 中文兼容版本
         /// </summary>
         public async Task<object> GetDeviceStatisticsAsync()

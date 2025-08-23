@@ -157,14 +157,17 @@ namespace RoomDeviceManagement.Services
             {
                 _logger.LogInformation($"📊 获取最新健康数据 - 老人ID: {elderlyId}");
 
-                var healthRecords = await _chineseDbService.GetHealthRecordsAsync(elderlyId);
-                var latestRecord = healthRecords.FirstOrDefault();
-
-                if (latestRecord == null)
+                // 获取最近7天的健康记录，确保按时间降序排列
+                var healthRecords = await _chineseDbService.GetHealthRecordsAsync(elderlyId, DateTime.Now.AddDays(-7));
+                
+                if (!healthRecords.Any())
                 {
                     _logger.LogInformation($"📭 未找到老人健康数据 - 老人ID: {elderlyId}");
                     return null;
                 }
+
+                // 获取最新的记录（已经按时间降序排列）
+                var latestRecord = healthRecords.First();
 
                 var result = new HealthMonitoring
                 {
@@ -178,12 +181,12 @@ namespace RoomDeviceManagement.Services
                     Status = latestRecord.Status
                 };
 
-                _logger.LogInformation($"✅ 成功获取最新健康数据 - 老人ID: {elderlyId}, 状态: {result.Status}");
+                _logger.LogInformation($"✅ 成功获取最新健康数据 - 老人ID: {elderlyId}, 监测时间: {result.MonitoringDate}, 状态: {result.Status}");
                 return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"❌ 获取最新健康数据失败: {ex.Message}");
+                _logger.LogError(ex, $"❌ 获取最新健康数据失败: 老人ID={elderlyId}, {ex.Message}");
                 throw;
             }
         }
