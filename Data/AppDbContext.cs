@@ -27,18 +27,10 @@ namespace ElderlyCareSystem.Data
         public DbSet<HealthAlert> HealthAlerts { get; set; }
         public DbSet<HealthThreshold> HealthThresholds { get; set; }
         public DbSet<VoiceAssistantReminder> VoiceAssistantReminders { get; set; }
-
+        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // === 表映射 ===
-            modelBuilder.Entity<HealthAssessmentReport>()
-                .ToTable("HEALTHASSESSMENTREPORT", schema: "SYS");
-            modelBuilder.Entity<MedicalOrder>()
-                .ToTable("MEDICALORDER", schema: "SYS");
-            modelBuilder.Entity<HealthThreshold>()
-                .ToTable("HEALTHTHRESHOLD");
-            modelBuilder.Entity<VoiceAssistantReminder>()
-                .ToTable("VOICEASSISTANTREMINDER");
+            
 
             // === FamilyInfo 外键关联 ElderlyInfo ===
             modelBuilder.Entity<FamilyInfo>()
