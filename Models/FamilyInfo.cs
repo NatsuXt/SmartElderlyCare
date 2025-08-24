@@ -36,6 +36,8 @@ namespace ElderlyCareSystem.Models
 
         public ElderlyInfo Elderly { get; set; }
 
-        
+        public FamilyAccount FamilyAccount { get; set; }
+
+
     }
 }
