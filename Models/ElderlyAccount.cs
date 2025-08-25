@@ -17,7 +17,6 @@ public class ElderlyAccount
     [Column("PASSWORD_HASH"), MaxLength(200)]
     public string PasswordHash { get; set; }  // 存储加密后的密码
 
-    // 一对一导航属性
     public ElderlyInfo ElderlyInfo { get; set; }
 
     // 构造函数，初始化默认密码为 "0000" 的哈希

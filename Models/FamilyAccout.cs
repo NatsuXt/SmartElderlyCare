@@ -11,18 +11,14 @@ namespace ElderlyCareSystem.Models
         [Column("ACCOUNT_ID")]
         public int AccountId { get; set; }
 
-        [Required]
-        [Column("USERNAME"), MaxLength(50)]
-        public string Username { get; set; }  // 可以用 FamilyId 或自定义账号名
-
-        [Required]
-        [Column("PASSWORD_HASH"), MaxLength(200)]
-        public string PasswordHash { get; set; }
-
         // 外键指向 FamilyInfo
         [ForeignKey(nameof(FamilyInfo))]
         [Column("FAMILY_ID")]
         public int FamilyId { get; set; }
+
+        [Required]
+        [Column("PASSWORD_HASH"), MaxLength(200)]
+        public string PasswordHash { get; set; }
 
         public FamilyInfo FamilyInfo { get; set; }
 
