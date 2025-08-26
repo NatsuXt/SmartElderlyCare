@@ -28,7 +28,7 @@ namespace ElderlyCareSystem.Models
         public int CognitiveFunction { get; set; }
 
         [Column("HEALTH_GRADE"), MaxLength(50)]
-        public string HealthGrade { get; set; }
+        public string? HealthGrade { get; set; }
 
         public ElderlyInfo Elderly { get; set; }
     }

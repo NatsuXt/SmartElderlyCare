@@ -96,82 +96,105 @@ namespace ElderlyCareSystem.Services
 
 
         /// <summary>
-        /// 删除老人信息
+        /// 删除老人信息及其所有相关数据（手动级联删除，支持事务回滚）
         /// </summary>
         public async Task<bool> DeleteElderlyAsync(int elderlyId)
         {
-            var elderly = await _context.ElderlyInfos.FindAsync(elderlyId);
-            if (elderly == null) return false;
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
-            // 1. 删除依赖 MedicalOrders 的 VoiceAssistantReminders
-            await _context.VoiceAssistantReminders
-                .Where(v => v.ElderlyId == elderlyId)
-                .ExecuteDeleteAsync();
-
-            // 2. 删除 MedicalOrders
-            await _context.MedicalOrders
-                .Where(m => m.ElderlyId == elderlyId)
-                .ExecuteDeleteAsync();
-
-            // 3. 删除其他直接依赖 ElderlyInfo 的表
-            await _context.ActivityParticipations
-                .Where(a => a.ElderlyId == elderlyId)
-                .ExecuteDeleteAsync();
-
-            await _context.DietRecommendations
-                .Where(d => d.ElderlyId == elderlyId)
-                .ExecuteDeleteAsync();
-
-            await _context.EmergencySOSs
-                .Where(e => e.ElderlyId == elderlyId)
-                .ExecuteDeleteAsync();
-
-            await _context.HealthAlerts
-                .Where(h => h.ElderlyId == elderlyId)
-                .ExecuteDeleteAsync();
-
-            await _context.HealthThresholds
-                .Where(h => h.ElderlyId == elderlyId)
-                .ExecuteDeleteAsync();
-
-            await _context.HealthMonitorings
-                .Where(h => h.ElderlyId == elderlyId)
-                .ExecuteDeleteAsync();
-
-            await _context.HealthAssessmentReports
-                .Where(h => h.ElderlyId == elderlyId)
-                .ExecuteDeleteAsync();
-
-            await _context.NursingPlans
-                .Where(n => n.ElderlyId == elderlyId)
-                .ExecuteDeleteAsync();
-
-            await _context.FamilyInfos
-                .Where(f => f.ElderlyId == elderlyId)
-                .ExecuteDeleteAsync();
-
-            // 4. 删除 FeeDetails 与 FeeSettlements
-            var feeSettlementIds = await _context.FeeSettlements
-                .Where(f => f.ElderlyId == elderlyId)
-                .Select(f => f.SettlementId)
-                .ToListAsync();
-
-            if (feeSettlementIds.Any())
+            try
             {
-                await _context.FeeDetails
-                    .Where(fd => feeSettlementIds.Contains(fd.FeeSettlementId))
+                var elderly = await _context.ElderlyInfos.FindAsync(elderlyId);
+                if (elderly == null) return false;
+
+                // 1. 删除依赖 MedicalOrders 的 VoiceAssistantReminders
+                await _context.VoiceAssistantReminders
+                    .Where(v => v.ElderlyId == elderlyId)
                     .ExecuteDeleteAsync();
 
-                await _context.FeeSettlements
+                // 2. 删除 MedicalOrders
+                await _context.MedicalOrders
+                    .Where(m => m.ElderlyId == elderlyId)
+                    .ExecuteDeleteAsync();
+
+                // 3. 删除其他直接依赖 ElderlyInfo 的表
+                await _context.ActivityParticipations
+                    .Where(a => a.ElderlyId == elderlyId)
+                    .ExecuteDeleteAsync();
+
+                await _context.DietRecommendations
+                    .Where(d => d.ElderlyId == elderlyId)
+                    .ExecuteDeleteAsync();
+
+                await _context.EmergencySOSs
+                    .Where(e => e.ElderlyId == elderlyId)
+                    .ExecuteDeleteAsync();
+
+                await _context.HealthAlerts
+                    .Where(h => h.ElderlyId == elderlyId)
+                    .ExecuteDeleteAsync();
+
+                await _context.HealthThresholds
+                    .Where(h => h.ElderlyId == elderlyId)
+                    .ExecuteDeleteAsync();
+
+                await _context.HealthMonitorings
+                    .Where(h => h.ElderlyId == elderlyId)
+                    .ExecuteDeleteAsync();
+
+                await _context.HealthAssessmentReports
+                    .Where(h => h.ElderlyId == elderlyId)
+                    .ExecuteDeleteAsync();
+
+                await _context.NursingPlans
+                    .Where(n => n.ElderlyId == elderlyId)
+                    .ExecuteDeleteAsync();
+
+                // 4. 删除 FamilyAccount（必须先删子表）
+                await _context.FamilyAccounts
+                    .Where(fa => _context.FamilyInfos
+                        .Where(fi => fi.ElderlyId == elderlyId)
+                        .Select(fi => fi.FamilyId)
+                        .Contains(fa.FamilyId))
+                    .ExecuteDeleteAsync();
+
+                // 5. 删除 FamilyInfo
+                await _context.FamilyInfos
                     .Where(f => f.ElderlyId == elderlyId)
                     .ExecuteDeleteAsync();
+
+                // 6. 删除 FeeDetails 与 FeeSettlements
+                var feeSettlementIds = await _context.FeeSettlements
+                    .Where(f => f.ElderlyId == elderlyId)
+                    .Select(f => f.SettlementId)
+                    .ToListAsync();
+
+                if (feeSettlementIds.Any())
+                {
+                    await _context.FeeDetails
+                        .Where(fd => feeSettlementIds.Contains(fd.FeeSettlementId))
+                        .ExecuteDeleteAsync();
+
+                    await _context.FeeSettlements
+                        .Where(f => f.ElderlyId == elderlyId)
+                        .ExecuteDeleteAsync();
+                }
+                await _context.ElderlyAccounts
+                .Where(a => a.ElderlyId == elderlyId)
+                .ExecuteDeleteAsync();
+                // 7. 删除 ElderlyInfo 本身
+                _context.ElderlyInfos.Remove(elderly);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return true;
             }
-
-            // 5. 删除 ElderlyInfo 本身
-            _context.ElderlyInfos.Remove(elderly);
-
-            await _context.SaveChangesAsync();
-            return true;
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
 

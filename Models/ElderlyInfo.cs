@@ -183,5 +183,46 @@ namespace ElderlyCareSystem.Models
         public FeeSettlement FeeSettlement { get; set; } = null!;
     }
 
+    [Table("VISITORREGISTRATION")]
+    public class VisitorRegistration
+    {
+        [Key]
+        [Column("VISITOR_ID")]
+        public int visitor_id { get; set; }
+
+        [Column("FAMILY_ID")]
+        public int family_id { get; set; } // 家属ID 外键
+
+        [Column("ELDERLY_ID")]
+        public int elderly_id { get; set; } // 老人ID 外键
+
+        [Required(ErrorMessage = "访客姓名不能为空")]
+        [StringLength(100, ErrorMessage = "访客姓名不能超过100个字符")]
+        [Column("VISITOR_NAME")]
+        public string visitor_name { get; set; } = string.Empty;
+
+        [Column("VISIT_TIME")]
+        public DateTime visit_time { get; set; }
+
+        [Required(ErrorMessage = "与老人关系不能为空")]
+        [StringLength(50, ErrorMessage = "与老人关系不能超过50个字符")]
+        [Column("RELATIONSHIP_TO_ELDERLY")]
+        public string relationship_to_elderly { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "探访原因不能为空")]
+        [Column("VISIT_REASON", TypeName = "CLOB")]
+        public string visit_reason { get; set; } = string.Empty;
+
+        [StringLength(20)]
+        [Column("VISIT_TYPE")]
+        public string visit_type { get; set; } = string.Empty;
+
+        [StringLength(20)]
+        [Column("APPROVAL_STATUS")]
+        public string approval_status { get; set; } = string.Empty;
+    }
+
+
+
 }
 

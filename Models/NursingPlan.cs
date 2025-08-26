@@ -16,7 +16,7 @@ namespace ElderlyCareSystem.Models
         public int ElderlyId { get; set; }
 
         [Column("STAFF_ID")]
-        public int StaffId { get; set; }
+        public int? StaffId { get; set; }
 
         [Column("PLAN_START_DATE")]
         public DateTime PlanStartDate { get; set; }
@@ -25,13 +25,13 @@ namespace ElderlyCareSystem.Models
         public DateTime PlanEndDate { get; set; }
 
         [Column("CARE_TYPE"), MaxLength(50)]
-        public string CareType { get; set; }
+        public string? CareType { get; set; }
 
         [Column("PRIORITY"), MaxLength(50)]
-        public string Priority { get; set; }
+        public string? Priority { get; set; }
 
         [Column("EVALUATION_STATUS"), MaxLength(50)]
-        public string EvaluationStatus { get; set; }
+        public string? EvaluationStatus { get; set; }
 
         public ElderlyInfo Elderly { get; set; }
     }

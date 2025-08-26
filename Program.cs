@@ -21,6 +21,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<QianfanService>();
 builder.Services.AddScoped<DietRecommendationService>();
 builder.Services.AddScoped< ElderlyInfoService>();
+builder.Services.AddScoped<AccountService>();
 
 builder.Services.AddSwaggerGen(c =>
 {

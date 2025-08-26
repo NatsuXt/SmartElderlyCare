@@ -20,19 +20,19 @@ namespace ElderlyCareSystem.Models
         public string Name { get; set; }
 
         [Column("RELATIONSHIP"), MaxLength(50)]
-        public string Relationship { get; set; }
+        public string? Relationship { get; set; }
 
         [Column("CONTACT_PHONE"), MaxLength(20)]
-        public string ContactPhone { get; set; }
+        public string? ContactPhone { get; set; }
 
         [Column("CONTACT_EMAIL"), MaxLength(50)]
-        public string ContactEmail { get; set; }
+        public string? ContactEmail { get; set; }
 
         [Column("ADDRESS"), MaxLength(200)]
-        public string Address { get; set; }
+        public string? Address { get; set; }
 
         [Column("IS_PRIMARY_CONTACT"), MaxLength(1)]
-        public string IsPrimaryContact { get; set; }  // 'Y' or 'N'
+        public string? IsPrimaryContact { get; set; }  // 'Y' or 'N'
 
         public ElderlyInfo Elderly { get; set; }
 

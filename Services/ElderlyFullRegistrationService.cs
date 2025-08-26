@@ -21,12 +21,11 @@ namespace ElderlyCareSystem.Services
         /// 老人入住登记与初次健康评估（包括家属信息），支持事务回滚
         /// </summary>
         public async Task<int> RegisterElderlyAsync(
-            ElderlyInfoCreateDto elderlyDto,
-            HealthAssessmentReportCreateDto assessmentDto,
-            HealthMonitoringCreateDto monitoringDto,
-            List<FamilyInfoCreateDto> familyDtos)
+    ElderlyInfoCreateDto elderlyDto,
+    HealthAssessmentReportCreateDto assessmentDto,
+    HealthMonitoringCreateDto monitoringDto,
+    List<FamilyInfoCreateDto> familyDtos)
         {
-            // 开启事务
             using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
@@ -41,12 +40,19 @@ namespace ElderlyCareSystem.Services
                     ContactPhone = elderlyDto.ContactPhone,
                     Address = elderlyDto.Address,
                     EmergencyContact = elderlyDto.EmergencyContact
-                    // 如果有入住状态字段，比如 Status = "入住"
                 };
                 await _context.ElderlyInfos.AddAsync(elderly);
                 await _context.SaveChangesAsync(); // 保存，获取 ElderlyId
 
-                // 2. 添加健康评估报告
+                // 2. 自动为老人生成账户（密码初始值 0000 的哈希）
+                var elderlyAccount = new ElderlyAccount
+                {
+                    ElderlyId = elderly.ElderlyId
+                    // PasswordHash 会在构造函数里自动生成 "0000" 的哈希
+                };
+                await _context.ElderlyAccounts.AddAsync(elderlyAccount);
+
+                // 3. 添加健康评估报告
                 var assessment = new HealthAssessmentReport
                 {
                     ElderlyId = elderly.ElderlyId,
@@ -58,7 +64,7 @@ namespace ElderlyCareSystem.Services
                 };
                 await _context.HealthAssessmentReports.AddAsync(assessment);
 
-                // 3. 添加健康监测数据
+                // 4. 添加健康监测数据
                 var monitoring = new HealthMonitoring
                 {
                     ElderlyId = elderly.ElderlyId,
@@ -71,7 +77,7 @@ namespace ElderlyCareSystem.Services
                 };
                 await _context.HealthMonitorings.AddAsync(monitoring);
 
-                // 4. 添加家属信息
+                // 5. 添加家属信息 + 生成账户
                 if (familyDtos != null)
                 {
                     foreach (var f in familyDtos)
@@ -87,19 +93,27 @@ namespace ElderlyCareSystem.Services
                             IsPrimaryContact = f.IsPrimaryContact
                         };
                         await _context.FamilyInfos.AddAsync(family);
+                        await _context.SaveChangesAsync(); // 保存，获取 FamilyId
+
+                        // 自动生成家属账户
+                        var familyAccount = new FamilyAccount
+                        {
+                            FamilyId = family.FamilyId
+                            // PasswordHash 会在构造函数里自动生成 "0000" 的哈希
+                        };
+                        await _context.FamilyAccounts.AddAsync(familyAccount);
                     }
                 }
 
-                await _context.SaveChangesAsync(); // 保存所有新增数据
+                // 一次性保存所有新建的账户和健康数据
+                await _context.SaveChangesAsync();
 
-                // 提交事务
                 await transaction.CommitAsync();
 
                 return elderly.ElderlyId;
             }
             catch
             {
-                // 发生异常，回滚事务
                 await transaction.RollbackAsync();
                 throw;
             }

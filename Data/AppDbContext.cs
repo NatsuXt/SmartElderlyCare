@@ -30,10 +30,13 @@ namespace ElderlyCareSystem.Data
         public DbSet<HealthAlert> HealthAlerts { get; set; }
         public DbSet<HealthThreshold> HealthThresholds { get; set; }
         public DbSet<VoiceAssistantReminder> VoiceAssistantReminders { get; set; }
-        
+
+        //访客登记表(VisitorRegistration)   
+        public DbSet<VisitorRegistration> VisitorRegistrations { get; set; }
+
         //protected override void OnModelCreating(ModelBuilder modelBuilder)
         //{
-            
+
 
         //    // === FamilyInfo 外键关联 ElderlyInfo ===
         //    modelBuilder.Entity<FamilyInfo>()
