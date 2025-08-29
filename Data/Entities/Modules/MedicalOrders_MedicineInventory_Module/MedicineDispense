@@ -1,0 +1,71 @@
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace api.Models
+{
+    public class MedicineDispense
+    {
+        [Key]
+        public int dispense_id { get; set; } // 开药记录ID 主键PK
+
+        [Required, StringLength(50)]
+        public string bill_id { get; set; } = string.Empty; // 账单ID/业务流水号 唯一约束；便于对账
+
+        public int elderly_id { get; set; } // 老人ID 外键FK，关联 ElderlyInfo
+
+        public int? order_id { get; set; } // 医嘱ID 可空；外键FK，关联 MedicalOrder
+
+        public int? staff_id { get; set; } // 经办人（药师/护士）可空；外键FK，关联 StaffInfo
+
+        public int medicine_id { get; set; } // 药品ID 外键FK，关联 MedicineInventory
+
+        public int stock_batch_id { get; set; } // 库存价格批次ID 外键FK，关联 MedicineStockPrice
+
+        [Range(1, int.MaxValue)]
+        public int quantity { get; set; } // 发药数量 必填，>0
+
+        [Column(TypeName = "NUMBER(12,2)")]
+        public decimal unit_sale_price { get; set; } // 销售单价（发药时快照，自批次 sale_price 锁定）
+
+        [Column(TypeName = "NUMBER(12,2)")]
+        public decimal total_amount { get; set; } // 总金额=quantity×unit_sale_price
+
+        [StringLength(20)]
+        public string payment_status { get; set; } = "待支付"; // 支付状态：待支付/已支付/已退款
+
+        [StringLength(50)]
+        public string? payment_method { get; set; } // 支付方式：现金/刷卡/转账/医保等 可空
+
+        public int? settlement_id { get; set; } // 费用结算ID 可空；外键FK，关联 FeeSettlement
+
+        [Column(TypeName = "DATE")]
+        public DateTime dispense_time { get; set; } = DateTime.Now; // 开药/发药时间 默认当前
+
+        [StringLength(20)]
+        public string status { get; set; } = "已发药"; // 记录状态：已开立/已发药/已退药（默认已发药）
+
+        [Column(TypeName = "CLOB")]
+        public string? remarks { get; set; } // 备注 可空
+
+        // —— 导航属性 —— //
+        [ForeignKey("elderly_id")]
+        public ElderlyInfo? Elderly { get; set; }
+
+        [ForeignKey("order_id")]
+        public MedicalOrder? MedicalOrder { get; set; }
+
+        [ForeignKey("staff_id")]
+        public StaffInfo? Staff { get; set; }
+
+        [ForeignKey("medicine_id")]
+        public MedicineInventory? Medicine { get; set; }
+
+        [ForeignKey("stock_batch_id")]
+        public MedicineStockPrice? StockBatch { get; set; }
+
+        // settlement_id 导航（如存在对应模型）
+        // [ForeignKey("settlement_id")]
+        // public FeeSettlement? Settlement { get; set; }
+    }
+}
