@@ -1,0 +1,53 @@
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace api.Models
+{
+    public class MedicineStockPrice
+    {
+        [Key]
+        public int stock_batch_id { get; set; } // 库存价格批次ID 主键PK
+
+        public int medicine_id { get; set; } // 药品ID 外键FK，关联 MedicineInventory
+
+        [StringLength(50)]
+        public string? batch_no { get; set; } // 生产批号 (medicine_id, batch_no) 可加唯一
+
+        [Column(TypeName = "DATE")]
+        public DateTime? expiration_date { get; set; } // 失效日期（效期管理）
+
+        [Column(TypeName = "NUMBER(12,2)")]
+        public decimal? cost_price { get; set; } // 进价（成本单价）可空
+
+        [Required, Column(TypeName = "NUMBER(12,2)")]
+        public decimal sale_price { get; set; } // 销售价（发药计价用）
+
+        [Range(0, int.MaxValue)]
+        public int quantity_in_stock { get; set; } // 当前可用库存数量 ≥0
+
+        [Range(0, int.MaxValue)]
+        public int reserved_quantity { get; set; } = 0; // 预留数量 默认0
+
+        public int? min_stock_level { get; set; } // 最低库存告警阈值 可空
+
+        [StringLength(100)]
+        public string? location { get; set; } // 存放位置 可空
+
+        [StringLength(100)]
+        public string? supplier { get; set; } // 供应商 可空
+
+        [Column(TypeName = "NUMBER(1)")]
+        public bool is_active { get; set; } = true; // 是否有效 1/0
+
+        [Column(TypeName = "DATE")]
+        public DateTime created_at { get; set; } = DateTime.Now; // 创建时间
+
+        [Column(TypeName = "DATE")]
+        public DateTime? updated_at { get; set; } // 更新时间
+
+        // —— 导航属性 —— //
+        [ForeignKey("medicine_id")]
+        public MedicineInventory? Medicine { get; set; }
+    }
+}
