@@ -2,6 +2,62 @@ using System.ComponentModel.DataAnnotations;
 
 namespace RoomDeviceManagement.DTOs
 {
+    // ======== 支付管理 DTOs ========
+    
+    /// <summary>
+    /// 账单支付请求DTO
+    /// </summary>
+    public class BillingPaymentDto
+    {
+        [Required]
+        [Range(0.01, 99999.99)]
+        public decimal PaymentAmount { get; set; }
+        
+        [Required]
+        public DateTime PaymentDate { get; set; } = DateTime.Now;
+        
+        [Required]
+        [MaxLength(20)]
+        public string PaymentMethod { get; set; } = "现金"; // 现金、银行卡、微信、支付宝、转账
+        
+        [MaxLength(500)]
+        public string? Remarks { get; set; }
+    }
+    
+    /// <summary>
+    /// 部分支付请求DTO
+    /// </summary>
+    public class PartialPaymentDto
+    {
+        [Required]
+        [Range(0.01, 99999.99)]
+        public decimal PaymentAmount { get; set; }
+        
+        [Required]
+        public DateTime PaymentDate { get; set; } = DateTime.Now;
+        
+        [Required]
+        [MaxLength(20)]
+        public string PaymentMethod { get; set; } = "现金";
+        
+        [MaxLength(500)]
+        public string? Remarks { get; set; }
+    }
+    
+    /// <summary>
+    /// 支付历史记录DTO
+    /// </summary>
+    public class PaymentHistoryDto
+    {
+        public int BillingId { get; set; }
+        public decimal PaymentAmount { get; set; }
+        public DateTime PaymentDate { get; set; }
+        public string PaymentMethod { get; set; } = string.Empty;
+        public string? Remarks { get; set; }
+        public DateTime CreatedDate { get; set; }
+    }
+
+    // ======== 房间管理 DTOs ========
     // ======== 房间管理 DTOs ========
     public class RoomCreateDto
     {

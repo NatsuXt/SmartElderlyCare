@@ -14,13 +14,16 @@ namespace RoomDeviceManagement.Controllers
     public class RoomOccupancyController : ControllerBase
     {
         private readonly RoomManagementService _roomManagementService;
+        private readonly ChineseCompatibleDatabaseService _chineseDbService;
         private readonly ILogger<RoomOccupancyController> _logger;
 
         public RoomOccupancyController(
             RoomManagementService roomManagementService,
+            ChineseCompatibleDatabaseService chineseDbService,
             ILogger<RoomOccupancyController> logger)
         {
             _roomManagementService = roomManagementService;
+            _chineseDbService = chineseDbService;
             _logger = logger;
         }
 
@@ -392,5 +395,130 @@ namespace RoomDeviceManagement.Controllers
                 });
             }
         }
+
+        #region 💰 支付管理API
+
+        /// <summary>
+        /// 处理账单支付
+        /// </summary>
+        [HttpPut("billing/{billingId}/payment")]
+        public async Task<IActionResult> ProcessBillingPayment(int billingId, [FromBody] BillingPaymentDto request)
+        {
+            try
+            {
+                _logger.LogInformation($"💰 处理账单支付请求: 账单ID={billingId}");
+
+                var result = await _chineseDbService.ProcessBillingPaymentAsync(
+                    billingId, 
+                    request.PaymentAmount, 
+                    request.PaymentMethod, 
+                    request.Remarks);
+
+                return Ok(new ApiResponse<object>
+                {
+                    Success = true,
+                    Message = "账单支付成功",
+                    Data = result
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning($"⚠️ 账单支付参数错误: {ex.Message}");
+                return BadRequest(new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    Data = null
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ 账单支付失败: 账单ID={billingId}");
+                return StatusCode(500, new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "账单支付失败",
+                    Data = null
+                });
+            }
+        }
+
+        /// <summary>
+        /// 部分支付
+        /// </summary>
+        [HttpPut("billing/{billingId}/partial-payment")]
+        public async Task<IActionResult> ProcessPartialPayment(int billingId, [FromBody] PartialPaymentDto request)
+        {
+            try
+            {
+                _logger.LogInformation($"💸 处理部分支付请求: 账单ID={billingId}");
+
+                var result = await _chineseDbService.ProcessBillingPaymentAsync(
+                    billingId, 
+                    request.PaymentAmount, 
+                    request.PaymentMethod, 
+                    $"【部分支付】{request.Remarks}");
+
+                return Ok(new ApiResponse<object>
+                {
+                    Success = true,
+                    Message = "部分支付成功",
+                    Data = result
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning($"⚠️ 部分支付参数错误: {ex.Message}");
+                return BadRequest(new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    Data = null
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ 部分支付失败: 账单ID={billingId}");
+                return StatusCode(500, new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "部分支付失败",
+                    Data = null
+                });
+            }
+        }
+
+        /// <summary>
+        /// 获取支付历史
+        /// </summary>
+        [HttpGet("billing/{billingId}/payment-history")]
+        public async Task<IActionResult> GetPaymentHistory(int billingId)
+        {
+            try
+            {
+                _logger.LogInformation($"📋 获取支付历史: 账单ID={billingId}");
+
+                var history = await _chineseDbService.GetPaymentHistoryAsync(billingId);
+
+                return Ok(new ApiResponse<List<object>>
+                {
+                    Success = true,
+                    Message = $"成功获取支付历史，共{history.Count}条记录",
+                    Data = history
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ 获取支付历史失败: 账单ID={billingId}");
+                return StatusCode(500, new ApiResponse<List<object>>
+                {
+                    Success = false,
+                    Message = "获取支付历史失败",
+                    Data = new List<object>()
+                });
+            }
+        }
+
+        #endregion
     }
 }

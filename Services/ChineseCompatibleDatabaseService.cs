@@ -1383,6 +1383,8 @@ namespace RoomDeviceManagement.Services
             public int Days { get; set; }
             public decimal RoomRate { get; set; }
             public decimal TotalAmount { get; set; }
+            public decimal PaidAmount { get; set; }
+            public decimal UnpaidAmount { get; set; }
             public string PaymentStatus { get; set; } = "";
             public DateTime? PaymentDate { get; set; }
             public DateTime CreatedDate { get; set; }
@@ -1682,7 +1684,12 @@ namespace RoomDeviceManagement.Services
                     SELECT 
                         rb.billing_id, rb.occupancy_id, rb.elderly_id, rb.room_id,
                         rb.billing_start_date, rb.billing_end_date, rb.days, 
-                        rb.daily_rate, rb.total_amount, rb.payment_status, rb.payment_date,
+                        rb.daily_rate, 
+                        NVL(rb.total_amount, 0) as total_amount,
+                        NVL(rb.paid_amount, 0) as paid_amount,
+                        NVL(rb.unpaid_amount, NVL(rb.total_amount, 0)) as unpaid_amount,
+                        NVL(rb.payment_status, '未支付') as payment_status, 
+                        rb.payment_date,
                         rb.created_date, rb.updated_date,
                         rm.room_number,
                         ei.name as elderly_name
@@ -1712,6 +1719,8 @@ namespace RoomDeviceManagement.Services
                         Days = reader.GetInt32("days"),
                         RoomRate = reader.GetDecimal("daily_rate"),
                         TotalAmount = reader.GetDecimal("total_amount"),
+                        PaidAmount = reader.GetDecimal("paid_amount"),
+                        UnpaidAmount = reader.GetDecimal("unpaid_amount"),
                         PaymentStatus = reader.GetString("payment_status") ?? "",
                         PaymentDate = reader.IsDBNull("payment_date") ? null : reader.GetDateTime("payment_date"),
                         CreatedDate = reader.GetDateTime("created_date"),
@@ -1880,6 +1889,249 @@ namespace RoomDeviceManagement.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"❌ 中文兼容服务获取房间入住统计失败");
+                throw;
+            }
+        }
+
+        #endregion
+
+        #region 💰 支付管理功能
+
+        /// <summary>
+        /// 处理账单支付 - 支持全额支付和部分支付
+        /// </summary>
+        public async Task<object> ProcessBillingPaymentAsync(int billingId, decimal paymentAmount, 
+            string paymentMethod, string? remarks = null)
+        {
+            try
+            {
+                _logger.LogInformation($"💰 处理账单支付: 账单ID={billingId}, 金额={paymentAmount}, 方式={paymentMethod}");
+
+                using var connection = new OracleConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                // 1. 先获取当前账单信息
+                var getBillingSql = @"
+                    SELECT billing_id, 
+                           NVL(total_amount, 0) as total_amount, 
+                           NVL(paid_amount, 0) as paid_amount, 
+                           NVL(unpaid_amount, 0) as unpaid_amount, 
+                           NVL(payment_status, '未支付') as payment_status
+                    FROM RoomBilling 
+                    WHERE billing_id = :billingId";
+
+                using var getBillingCommand = new OracleCommand(getBillingSql, connection);
+                getBillingCommand.Parameters.Add(":billingId", OracleDbType.Int32).Value = billingId;
+
+                using var reader = await getBillingCommand.ExecuteReaderAsync();
+                if (!await reader.ReadAsync())
+                {
+                    throw new ArgumentException($"未找到账单ID: {billingId}");
+                }
+
+                var totalAmount = reader.IsDBNull("total_amount") ? 0m : reader.GetDecimal("total_amount");
+                var currentPaidAmount = reader.IsDBNull("paid_amount") ? 0m : reader.GetDecimal("paid_amount");
+                var unpaidAmount = reader.IsDBNull("unpaid_amount") ? 0m : reader.GetDecimal("unpaid_amount");
+                var currentStatus = reader.IsDBNull("payment_status") ? "未支付" : reader.GetString("payment_status");
+
+                reader.Close();
+
+                // 2. 验证支付金额
+                if (paymentAmount <= 0)
+                {
+                    throw new ArgumentException("支付金额必须大于0");
+                }
+
+                if (paymentAmount > unpaidAmount)
+                {
+                    throw new ArgumentException($"支付金额({paymentAmount})不能超过未支付金额({unpaidAmount})");
+                }
+
+                // 3. 计算新的支付状态
+                var newPaidAmount = currentPaidAmount + paymentAmount;
+                var newUnpaidAmount = totalAmount - newPaidAmount;
+                
+                string newPaymentStatus;
+                DateTime? paymentDate = null;
+
+                if (newUnpaidAmount == 0)
+                {
+                    newPaymentStatus = "已支付";
+                    paymentDate = DateTime.Now;
+                }
+                else if (newPaidAmount > 0)
+                {
+                    newPaymentStatus = "部分支付";
+                }
+                else
+                {
+                    newPaymentStatus = "未支付";
+                }
+
+                // 4. 更新账单支付信息
+                var updateSql = @"
+                    UPDATE RoomBilling 
+                    SET paid_amount = :paidAmount,
+                        unpaid_amount = :unpaidAmount,
+                        payment_status = :paymentStatus,
+                        payment_date = :paymentDate,
+                        remarks = NVL(:newRemarks, remarks),
+                        updated_date = SYSDATE
+                    WHERE billing_id = :billingId";
+
+                using var updateCommand = new OracleCommand(updateSql, connection);
+                updateCommand.Parameters.Add(":paidAmount", OracleDbType.Decimal).Value = newPaidAmount;
+                updateCommand.Parameters.Add(":unpaidAmount", OracleDbType.Decimal).Value = newUnpaidAmount;
+                updateCommand.Parameters.Add(":paymentStatus", OracleDbType.NVarchar2).Value = newPaymentStatus;
+                updateCommand.Parameters.Add(":paymentDate", OracleDbType.Date).Value = paymentDate ?? (object)DBNull.Value;
+                updateCommand.Parameters.Add(":newRemarks", OracleDbType.NVarchar2).Value = remarks ?? (object)DBNull.Value;
+                updateCommand.Parameters.Add(":billingId", OracleDbType.Int32).Value = billingId;
+
+                var rowsAffected = await updateCommand.ExecuteNonQueryAsync();
+
+                if (rowsAffected > 0)
+                {
+                    var result = new
+                    {
+                        BillingId = billingId,
+                        PaymentAmount = paymentAmount,
+                        PaymentMethod = paymentMethod,
+                        TotalAmount = totalAmount,
+                        PaidAmount = newPaidAmount,
+                        UnpaidAmount = newUnpaidAmount,
+                        PaymentStatus = newPaymentStatus,
+                        PaymentDate = paymentDate,
+                        Remarks = remarks
+                    };
+
+                    _logger.LogInformation($"✅ 账单支付成功: {newPaymentStatus}, 已付{newPaidAmount}/{totalAmount}");
+                    return result;
+                }
+
+                throw new Exception("支付更新失败");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ 账单支付失败: 账单ID={billingId}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 获取支付历史记录
+        /// </summary>
+        public async Task<List<object>> GetPaymentHistoryAsync(int billingId)
+        {
+            try
+            {
+                _logger.LogInformation($"📋 获取账单支付历史: {billingId}");
+
+                using var connection = new OracleConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                // 由于我们使用现有表结构，支付历史通过更新时间来模拟
+                var sql = @"
+                    SELECT 
+                        billing_id,
+                        paid_amount,
+                        payment_date,
+                        payment_status,
+                        remarks,
+                        updated_date,
+                        created_date
+                    FROM RoomBilling 
+                    WHERE billing_id = :billingId
+                    ORDER BY updated_date DESC";
+
+                using var command = new OracleCommand(sql, connection);
+                command.Parameters.Add(":billingId", OracleDbType.Int32).Value = billingId;
+
+                var history = new List<object>();
+                using var reader = await command.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    history.Add(new
+                    {
+                        BillingId = reader.GetInt32("billing_id"),
+                        PaidAmount = reader.GetDecimal("paid_amount"),
+                        PaymentDate = reader.IsDBNull("payment_date") ? (DateTime?)null : reader.GetDateTime("payment_date"),
+                        PaymentStatus = reader.GetString("payment_status"),
+                        Remarks = reader.IsDBNull("remarks") ? null : reader.GetString("remarks"),
+                        UpdatedDate = reader.GetDateTime("updated_date"),
+                        CreatedDate = reader.GetDateTime("created_date")
+                    });
+                }
+
+                _logger.LogInformation($"✅ 获取支付历史成功: {history.Count}条记录");
+                return history;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ 获取支付历史失败: {billingId}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 获取所有老人账务状态
+        /// </summary>
+        public async Task<List<object>> GetElderlyAccountStatusAsync()
+        {
+            try
+            {
+                _logger.LogInformation($"👴 获取所有老人账务状态");
+
+                using var connection = new OracleConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                var sql = @"
+                    SELECT 
+                        ei.elderly_id,
+                        ei.name as elderly_name,
+                        ro.room_id,
+                        rm.room_number,
+                        ro.check_in_date,
+                        SUM(CASE WHEN rb.remarks NOT LIKE '%押金%' THEN rb.unpaid_amount ELSE 0 END) as total_owed,
+                        SUM(CASE WHEN rb.remarks LIKE '%押金收取%' THEN rb.paid_amount 
+                                 WHEN rb.remarks LIKE '%押金退还%' THEN -rb.paid_amount
+                                 WHEN rb.remarks LIKE '%押金抵扣%' THEN -rb.paid_amount
+                                 ELSE 0 END) as deposit_balance,
+                        COUNT(CASE WHEN rb.payment_status IN ('未支付', '部分支付') AND rb.remarks NOT LIKE '%押金%' THEN 1 END) as unpaid_billing_count,
+                        MAX(rb.payment_date) as last_payment_date
+                    FROM ElderlyInfo ei
+                    LEFT JOIN RoomOccupancy ro ON ei.elderly_id = ro.elderly_id AND ro.status = '入住中'
+                    LEFT JOIN RoomManagement rm ON ro.room_id = rm.room_id
+                    LEFT JOIN RoomBilling rb ON ei.elderly_id = rb.elderly_id
+                    GROUP BY ei.elderly_id, ei.name, ro.room_id, rm.room_number, ro.check_in_date
+                    ORDER BY total_owed DESC";
+
+                using var command = new OracleCommand(sql, connection);
+                var accountStatus = new List<object>();
+
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    accountStatus.Add(new
+                    {
+                        ElderlyId = reader.GetDecimal("elderly_id"),
+                        ElderlyName = reader.GetString("elderly_name"),
+                        RoomId = reader.IsDBNull("room_id") ? null : (int?)reader.GetInt32("room_id"),
+                        RoomNumber = reader.IsDBNull("room_number") ? null : reader.GetString("room_number"),
+                        CheckInDate = reader.IsDBNull("check_in_date") ? null : (DateTime?)reader.GetDateTime("check_in_date"),
+                        TotalOwedAmount = reader.IsDBNull("total_owed") ? 0 : reader.GetDecimal("total_owed"),
+                        DepositBalance = reader.IsDBNull("deposit_balance") ? 0 : reader.GetDecimal("deposit_balance"),
+                        UnpaidBillingCount = reader.GetInt32("unpaid_billing_count"),
+                        LastPaymentDate = reader.IsDBNull("last_payment_date") ? null : (DateTime?)reader.GetDateTime("last_payment_date")
+                    });
+                }
+
+                _logger.LogInformation($"✅ 获取老人账务状态成功: {accountStatus.Count}条记录");
+                return accountStatus;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ 获取老人账务状态失败");
                 throw;
             }
         }
