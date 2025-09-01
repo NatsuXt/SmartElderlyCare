@@ -1344,5 +1344,546 @@ namespace RoomDeviceManagement.Services
         }
 
         #endregion
+
+        #region 房间入住管理相关方法
+
+        /// <summary>
+        /// 入住记录数据模型
+        /// </summary>
+        public class OccupancyData
+        {
+            public int OccupancyId { get; set; }
+            public int RoomId { get; set; }
+            public int ElderlyId { get; set; }
+            public string RoomNumber { get; set; } = "";
+            public string ElderlyName { get; set; } = "";
+            public DateTime CheckInDate { get; set; }
+            public DateTime? CheckOutDate { get; set; }
+            public string Status { get; set; } = "";
+            public string BedNumber { get; set; } = "";
+            public string Remarks { get; set; } = "";
+            public decimal RoomRate { get; set; }
+            public DateTime CreatedDate { get; set; }
+            public DateTime UpdatedDate { get; set; }
+        }
+
+        /// <summary>
+        /// 账单记录数据模型
+        /// </summary>
+        public class BillingData
+        {
+            public int BillingId { get; set; }
+            public int OccupancyId { get; set; }
+            public int ElderlyId { get; set; }
+            public string ElderlyName { get; set; } = "";
+            public int RoomId { get; set; }
+            public string RoomNumber { get; set; } = "";
+            public DateTime BillingStartDate { get; set; }
+            public DateTime BillingEndDate { get; set; }
+            public int Days { get; set; }
+            public decimal RoomRate { get; set; }
+            public decimal TotalAmount { get; set; }
+            public string PaymentStatus { get; set; } = "";
+            public DateTime? PaymentDate { get; set; }
+            public DateTime CreatedDate { get; set; }
+            public DateTime UpdatedDate { get; set; }
+        }
+
+        /// <summary>
+        /// 根据老人ID获取入住记录
+        /// </summary>
+        public async Task<List<OccupancyData>> GetOccupancyRecordsByElderlyIdAsync(int elderlyId)
+        {
+            try
+            {
+                _logger.LogInformation($"🔍 中文兼容服务获取老人ID={elderlyId}的入住记录");
+
+                using var connection = new OracleConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                var sql = @"
+                    SELECT 
+                        ro.occupancy_id, ro.room_id, ro.elderly_id, ro.check_in_date, 
+                        ro.check_out_date, ro.status, ro.bed_number, ro.remarks,
+                        ro.created_date, ro.updated_date,
+                        rm.room_number,
+                        ei.name as elderly_name
+                    FROM RoomOccupancy ro
+                    LEFT JOIN RoomManagement rm ON ro.room_id = rm.room_id
+                    LEFT JOIN ElderlyInfo ei ON ro.elderly_id = ei.elderly_id
+                    WHERE ro.elderly_id = :elderlyId
+                    ORDER BY ro.created_date DESC";
+
+                using var command = new OracleCommand(sql, connection);
+                command.Parameters.Add("elderlyId", OracleDbType.Int32).Value = elderlyId;
+
+                var records = new List<OccupancyData>();
+                using var reader = await command.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    var record = new OccupancyData
+                    {
+                        OccupancyId = reader.GetInt32("occupancy_id"),
+                        RoomId = reader.GetInt32("room_id"),
+                        ElderlyId = reader.GetInt32("elderly_id"),
+                        CheckInDate = reader.GetDateTime("check_in_date"),
+                        CheckOutDate = reader.IsDBNull("check_out_date") ? null : reader.GetDateTime("check_out_date"),
+                        Status = reader.GetString("status") ?? "",
+                        BedNumber = reader.GetString("bed_number") ?? "",
+                        Remarks = reader.GetString("remarks") ?? "",
+                        CreatedDate = reader.GetDateTime("created_date"),
+                        UpdatedDate = reader.GetDateTime("updated_date"),
+                        RoomNumber = reader.GetString("room_number") ?? "",
+                        ElderlyName = reader.GetString("elderly_name") ?? ""
+                    };
+                    records.Add(record);
+                }
+
+                _logger.LogInformation($"✅ 中文兼容服务成功获取到 {records.Count} 条入住记录");
+                return records;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ 中文兼容服务获取老人ID={elderlyId}入住记录失败");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 创建入住记录
+        /// </summary>
+        public async Task<int> CreateOccupancyRecordAsync(int roomId, int elderlyId, DateTime checkInDate, 
+            string bedNumber, string remarks)
+        {
+            try
+            {
+                _logger.LogInformation($"🏠 中文兼容服务创建入住记录: 房间ID={roomId}, 老人ID={elderlyId}");
+
+                using var connection = new OracleConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                var sql = @"
+                    INSERT INTO RoomOccupancy 
+                    (room_id, elderly_id, check_in_date, status, bed_number, remarks, created_date, updated_date)
+                    VALUES 
+                    (:roomId, :elderlyId, :checkInDate, :status, :bedNumber, :remarks, :createdDate, :updatedDate)
+                    RETURNING occupancy_id INTO :occupancyId";
+
+                using var command = new OracleCommand(sql, connection);
+                command.Parameters.Add("roomId", OracleDbType.Int32).Value = roomId;
+                command.Parameters.Add("elderlyId", OracleDbType.Int32).Value = elderlyId;
+                command.Parameters.Add("checkInDate", OracleDbType.Date).Value = checkInDate;
+                command.Parameters.Add("status", OracleDbType.NVarchar2).Value = "入住中";
+                command.Parameters.Add("bedNumber", OracleDbType.NVarchar2).Value = bedNumber ?? "";
+                command.Parameters.Add("remarks", OracleDbType.NVarchar2).Value = remarks ?? "";
+                command.Parameters.Add("createdDate", OracleDbType.Date).Value = DateTime.Now;
+                command.Parameters.Add("updatedDate", OracleDbType.Date).Value = DateTime.Now;
+                
+                var occupancyIdParam = new OracleParameter("occupancyId", OracleDbType.Int32);
+                occupancyIdParam.Direction = ParameterDirection.Output;
+                command.Parameters.Add(occupancyIdParam);
+
+                await command.ExecuteNonQueryAsync();
+                
+                var occupancyId = Convert.ToInt32(((OracleDecimal)occupancyIdParam.Value).Value);
+                _logger.LogInformation($"✅ 中文兼容服务成功创建入住记录，ID={occupancyId}");
+                
+                return occupancyId;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ 中文兼容服务创建入住记录失败");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 更新入住记录（办理退房）
+        /// </summary>
+        public async Task<bool> UpdateOccupancyRecordAsync(int occupancyId, DateTime checkOutDate, string remarks)
+        {
+            try
+            {
+                _logger.LogInformation($"🚪 中文兼容服务更新入住记录: ID={occupancyId}");
+
+                using var connection = new OracleConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                var sql = @"
+                    UPDATE RoomOccupancy 
+                    SET check_out_date = :checkOutDate, 
+                        status = :status, 
+                        remarks = :remarks, 
+                        updated_date = :updatedDate
+                    WHERE occupancy_id = :occupancyId";
+
+                using var command = new OracleCommand(sql, connection);
+                command.Parameters.Add("checkOutDate", OracleDbType.Date).Value = checkOutDate;
+                command.Parameters.Add("status", OracleDbType.NVarchar2).Value = "已退房";
+                command.Parameters.Add("remarks", OracleDbType.NVarchar2).Value = remarks ?? "";
+                command.Parameters.Add("updatedDate", OracleDbType.Date).Value = DateTime.Now;
+                command.Parameters.Add("occupancyId", OracleDbType.Int32).Value = occupancyId;
+
+                var rowsAffected = await command.ExecuteNonQueryAsync();
+                
+                _logger.LogInformation($"✅ 中文兼容服务成功更新入住记录，影响行数={rowsAffected}");
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ 中文兼容服务更新入住记录失败");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 获取入住记录详细信息
+        /// </summary>
+        public async Task<OccupancyData?> GetOccupancyRecordByIdAsync(int occupancyId)
+        {
+            try
+            {
+                _logger.LogInformation($"🔍 中文兼容服务获取入住记录: ID={occupancyId}");
+
+                using var connection = new OracleConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                var sql = @"
+                    SELECT 
+                        ro.occupancy_id, ro.room_id, ro.elderly_id, ro.check_in_date, 
+                        ro.check_out_date, ro.status, ro.bed_number, ro.remarks,
+                        ro.created_date, ro.updated_date,
+                        rm.room_number,
+                        ei.name as elderly_name
+                    FROM RoomOccupancy ro
+                    LEFT JOIN RoomManagement rm ON ro.room_id = rm.room_id
+                    LEFT JOIN ElderlyInfo ei ON ro.elderly_id = ei.elderly_id
+                    WHERE ro.occupancy_id = :occupancyId";
+
+                using var command = new OracleCommand(sql, connection);
+                command.Parameters.Add("occupancyId", OracleDbType.Int32).Value = occupancyId;
+
+                using var reader = await command.ExecuteReaderAsync();
+
+                if (await reader.ReadAsync())
+                {
+                    var record = new OccupancyData
+                    {
+                        OccupancyId = reader.GetInt32("occupancy_id"),
+                        RoomId = reader.GetInt32("room_id"),
+                        ElderlyId = reader.GetInt32("elderly_id"),
+                        CheckInDate = reader.GetDateTime("check_in_date"),
+                        CheckOutDate = reader.IsDBNull("check_out_date") ? null : reader.GetDateTime("check_out_date"),
+                        Status = reader.GetString("status") ?? "",
+                        BedNumber = reader.GetString("bed_number") ?? "",
+                        Remarks = reader.GetString("remarks") ?? "",
+                        CreatedDate = reader.GetDateTime("created_date"),
+                        UpdatedDate = reader.GetDateTime("updated_date"),
+                        RoomNumber = reader.GetString("room_number") ?? "",
+                        ElderlyName = reader.GetString("elderly_name") ?? ""
+                    };
+
+                    _logger.LogInformation($"✅ 中文兼容服务成功获取入住记录");
+                    return record;
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ 中文兼容服务获取入住记录失败");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 创建账单记录
+        /// </summary>
+        public async Task<int> CreateBillingRecordAsync(int occupancyId, int elderlyId, int roomId, 
+            DateTime billingStartDate, DateTime billingEndDate, decimal roomRate)
+        {
+            try
+            {
+                _logger.LogInformation($"💰 中文兼容服务创建账单记录: 入住ID={occupancyId}");
+
+                using var connection = new OracleConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                var days = (billingEndDate - billingStartDate).Days + 1;
+                var totalAmount = roomRate * days;
+
+                var sql = @"
+                    INSERT INTO RoomBilling 
+                    (occupancy_id, elderly_id, room_id, billing_start_date, billing_end_date, 
+                     days, daily_rate, total_amount, payment_status, billing_date, created_date, updated_date)
+                    VALUES 
+                    (:occupancyId, :elderlyId, :roomId, :billingStartDate, :billingEndDate, 
+                     :days, :roomRate, :totalAmount, :paymentStatus, :billingDate, :createdDate, :updatedDate)
+                    RETURNING billing_id INTO :billingId";
+
+                using var command = new OracleCommand(sql, connection);
+                command.Parameters.Add("occupancyId", OracleDbType.Int32).Value = occupancyId;
+                command.Parameters.Add("elderlyId", OracleDbType.Int32).Value = elderlyId;
+                command.Parameters.Add("roomId", OracleDbType.Int32).Value = roomId;
+                command.Parameters.Add("billingStartDate", OracleDbType.Date).Value = billingStartDate;
+                command.Parameters.Add("billingEndDate", OracleDbType.Date).Value = billingEndDate;
+                command.Parameters.Add("days", OracleDbType.Int32).Value = days;
+                command.Parameters.Add("roomRate", OracleDbType.Decimal).Value = roomRate;
+                command.Parameters.Add("totalAmount", OracleDbType.Decimal).Value = totalAmount;
+                command.Parameters.Add("paymentStatus", OracleDbType.NVarchar2).Value = "未支付";
+                command.Parameters.Add("billingDate", OracleDbType.Date).Value = DateTime.Now;
+                command.Parameters.Add("createdDate", OracleDbType.Date).Value = DateTime.Now;
+                command.Parameters.Add("updatedDate", OracleDbType.Date).Value = DateTime.Now;
+                
+                var billingIdParam = new OracleParameter("billingId", OracleDbType.Int32);
+                billingIdParam.Direction = ParameterDirection.Output;
+                command.Parameters.Add(billingIdParam);
+
+                await command.ExecuteNonQueryAsync();
+                
+                var billingId = Convert.ToInt32(((OracleDecimal)billingIdParam.Value).Value);
+                _logger.LogInformation($"✅ 中文兼容服务成功创建账单记录，ID={billingId}，金额={totalAmount}");
+                
+                return billingId;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ 中文兼容服务创建账单记录失败");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 获取账单记录（分页）
+        /// </summary>
+        public async Task<(List<BillingData> records, int totalCount)> GetBillingRecordsAsync(int page, int pageSize, int? elderlyId = null)
+        {
+            try
+            {
+                _logger.LogInformation($"💰 中文兼容服务获取账单记录: 页码={page}, 每页={pageSize}, 老人ID={elderlyId}");
+
+                using var connection = new OracleConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                // 构建查询条件
+                var whereClause = "";
+                var parameters = new List<OracleParameter>();
+
+                if (elderlyId.HasValue)
+                {
+                    whereClause = " WHERE rb.elderly_id = :elderlyId";
+                    parameters.Add(new OracleParameter("elderlyId", OracleDbType.Int32) { Value = elderlyId.Value });
+                }
+
+                // 分页查询
+                var offset = (page - 1) * pageSize;
+                var sql = $@"
+                    SELECT 
+                        rb.billing_id, rb.occupancy_id, rb.elderly_id, rb.room_id,
+                        rb.billing_start_date, rb.billing_end_date, rb.days, 
+                        rb.daily_rate, rb.total_amount, rb.payment_status, rb.payment_date,
+                        rb.created_date, rb.updated_date,
+                        rm.room_number,
+                        ei.name as elderly_name
+                    FROM RoomBilling rb
+                    LEFT JOIN RoomManagement rm ON rb.room_id = rm.room_id
+                    LEFT JOIN ElderlyInfo ei ON rb.elderly_id = ei.elderly_id
+                    {whereClause}
+                    ORDER BY rb.created_date DESC
+                    OFFSET {offset} ROWS FETCH NEXT {pageSize} ROWS ONLY";
+
+                using var command = new OracleCommand(sql, connection);
+                command.Parameters.AddRange(parameters.ToArray());
+
+                var records = new List<BillingData>();
+                using var reader = await command.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    var record = new BillingData
+                    {
+                        BillingId = reader.GetInt32("billing_id"),
+                        OccupancyId = reader.GetInt32("occupancy_id"),
+                        ElderlyId = reader.GetInt32("elderly_id"),
+                        RoomId = reader.GetInt32("room_id"),
+                        BillingStartDate = reader.GetDateTime("billing_start_date"),
+                        BillingEndDate = reader.GetDateTime("billing_end_date"),
+                        Days = reader.GetInt32("days"),
+                        RoomRate = reader.GetDecimal("daily_rate"),
+                        TotalAmount = reader.GetDecimal("total_amount"),
+                        PaymentStatus = reader.GetString("payment_status") ?? "",
+                        PaymentDate = reader.IsDBNull("payment_date") ? null : reader.GetDateTime("payment_date"),
+                        CreatedDate = reader.GetDateTime("created_date"),
+                        UpdatedDate = reader.GetDateTime("updated_date"),
+                        RoomNumber = reader.GetString("room_number") ?? "",
+                        ElderlyName = reader.GetString("elderly_name") ?? ""
+                    };
+                    records.Add(record);
+                }
+
+                // 获取总数
+                var countSql = $"SELECT COUNT(*) FROM RoomBilling rb {whereClause}";
+                using var countCommand = new OracleCommand(countSql, connection);
+                countCommand.Parameters.AddRange(parameters.ToArray());
+                var totalCount = Convert.ToInt32(await countCommand.ExecuteScalarAsync());
+
+                _logger.LogInformation($"✅ 中文兼容服务成功获取到 {records.Count} 条账单记录，总数={totalCount}");
+                return (records, totalCount);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ 中文兼容服务获取账单记录失败");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 获取需要生成账单的入住记录
+        /// </summary>
+        public async Task<List<OccupancyData>> GetOccupancyRecordsForBillingAsync(DateTime billingStartDate, DateTime billingEndDate, int? elderlyId = null)
+        {
+            try
+            {
+                _logger.LogInformation($"💰 中文兼容服务获取需要生成账单的入住记录: {billingStartDate:yyyy-MM-dd} 到 {billingEndDate:yyyy-MM-dd}");
+
+                using var connection = new OracleConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                var whereClause = "WHERE ro.check_in_date <= :billingEndDate AND (ro.check_out_date IS NULL OR ro.check_out_date >= :billingStartDate)";
+                var parameters = new List<OracleParameter>
+                {
+                    new OracleParameter("billingEndDate", OracleDbType.Date) { Value = billingEndDate },
+                    new OracleParameter("billingStartDate", OracleDbType.Date) { Value = billingStartDate }
+                };
+
+                if (elderlyId.HasValue)
+                {
+                    whereClause += " AND ro.elderly_id = :elderlyId";
+                    parameters.Add(new OracleParameter("elderlyId", OracleDbType.Int32) { Value = elderlyId.Value });
+                }
+
+                var sql = $@"
+                    SELECT 
+                        ro.occupancy_id, ro.room_id, ro.elderly_id, ro.check_in_date, 
+                        ro.check_out_date, ro.status, ro.bed_number, ro.remarks,
+                        ro.created_date, ro.updated_date,
+                        rm.room_number, rm.rate as room_rate,
+                        ei.name as elderly_name
+                    FROM RoomOccupancy ro
+                    LEFT JOIN RoomManagement rm ON ro.room_id = rm.room_id
+                    LEFT JOIN ElderlyInfo ei ON ro.elderly_id = ei.elderly_id
+                    {whereClause}
+                    ORDER BY ro.created_date DESC";
+
+                using var command = new OracleCommand(sql, connection);
+                command.Parameters.AddRange(parameters.ToArray());
+
+                var records = new List<OccupancyData>();
+                using var reader = await command.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    var record = new OccupancyData
+                    {
+                        OccupancyId = reader.GetInt32("occupancy_id"),
+                        RoomId = reader.GetInt32("room_id"),
+                        ElderlyId = reader.GetInt32("elderly_id"),
+                        CheckInDate = reader.GetDateTime("check_in_date"),
+                        CheckOutDate = reader.IsDBNull("check_out_date") ? null : reader.GetDateTime("check_out_date"),
+                        Status = reader.IsDBNull("status") ? "" : reader.GetString("status"),
+                        BedNumber = reader.IsDBNull("bed_number") ? "" : reader.GetString("bed_number"),
+                        Remarks = reader.IsDBNull("remarks") ? "" : reader.GetString("remarks"),
+                        CreatedDate = reader.GetDateTime("created_date"),
+                        UpdatedDate = reader.GetDateTime("updated_date"),
+                        RoomNumber = reader.IsDBNull("room_number") ? "" : reader.GetString("room_number"),
+                        RoomRate = reader.IsDBNull("room_rate") ? 0 : reader.GetDecimal("room_rate"),
+                        ElderlyName = reader.IsDBNull("elderly_name") ? "" : reader.GetString("elderly_name")
+                    };
+                    records.Add(record);
+                }
+
+                _logger.LogInformation($"✅ 中文兼容服务成功获取到 {records.Count} 条需要生成账单的入住记录");
+                return records;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ 中文兼容服务获取需要生成账单的入住记录失败");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 获取房间费率
+        /// </summary>
+        public async Task<decimal> GetRoomRateAsync(int roomId)
+        {
+            try
+            {
+                using var connection = new OracleConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                var sql = "SELECT rate FROM RoomManagement WHERE room_id = :roomId";
+                using var command = new OracleCommand(sql, connection);
+                command.Parameters.Add("roomId", OracleDbType.Int32).Value = roomId;
+
+                var result = await command.ExecuteScalarAsync();
+                return result == DBNull.Value ? 100 : Convert.ToDecimal(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ 获取房间费率失败");
+                return 100; // 默认费率
+            }
+        }
+        public async Task<object> GetOccupancyStatsAsync()
+        {
+            try
+            {
+                _logger.LogInformation("📊 中文兼容服务获取房间入住统计");
+
+                using var connection = new OracleConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                var sql = @"
+                    SELECT 
+                        COUNT(DISTINCT rm.room_id) as total_rooms,
+                        COUNT(DISTINCT CASE WHEN ro.status = '入住中' THEN rm.room_id END) as occupied_rooms,
+                        COUNT(DISTINCT CASE WHEN ro.status IS NULL OR ro.status != '入住中' THEN rm.room_id END) as available_rooms,
+                        COUNT(DISTINCT ro.elderly_id) as total_residents,
+                        AVG(rm.rate) as average_room_rate
+                    FROM RoomManagement rm
+                    LEFT JOIN RoomOccupancy ro ON rm.room_id = ro.room_id AND ro.status = '入住中'";
+
+                using var command = new OracleCommand(sql, connection);
+                using var reader = await command.ExecuteReaderAsync();
+
+                if (await reader.ReadAsync())
+                {
+                    var stats = new
+                    {
+                        TotalRooms = reader.GetInt32("total_rooms"),
+                        OccupiedRooms = reader.GetInt32("occupied_rooms"),
+                        AvailableRooms = reader.GetInt32("available_rooms"),
+                        TotalResidents = reader.GetInt32("total_residents"),
+                        AverageRoomRate = reader.IsDBNull("average_room_rate") ? 0 : reader.GetDecimal("average_room_rate"),
+                        OccupancyRate = reader.GetInt32("total_rooms") > 0 ? 
+                            Math.Round((double)reader.GetInt32("occupied_rooms") / reader.GetInt32("total_rooms") * 100, 2) : 0
+                    };
+
+                    _logger.LogInformation($"✅ 中文兼容服务成功获取房间入住统计");
+                    return stats;
+                }
+
+                return new { TotalRooms = 0, OccupiedRooms = 0, AvailableRooms = 0, TotalResidents = 0, AverageRoomRate = 0, OccupancyRate = 0 };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ 中文兼容服务获取房间入住统计失败");
+                throw;
+            }
+        }
+
+        #endregion
     }
 }

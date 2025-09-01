@@ -317,14 +317,18 @@ namespace RoomDeviceManagement.Services
                 // 如果有房间号更新，检查是否重复
                 if (updateFields.ContainsKey("roomNumber"))
                 {
-                    var duplicateRoom = await _chineseDbService.GetRoomByNumberAsync(updateFields["roomNumber"].ToString());
-                    if (duplicateRoom != null && duplicateRoom.RoomId != roomId)
+                    var newRoomNumber = updateFields["roomNumber"]?.ToString();
+                    if (!string.IsNullOrEmpty(newRoomNumber))
                     {
-                        return new ApiResponse<RoomDetailDto>
+                        var duplicateRoom = await _chineseDbService.GetRoomByNumberAsync(newRoomNumber);
+                        if (duplicateRoom != null && duplicateRoom.RoomId != roomId)
                         {
-                            Success = false,
-                            Message = $"房间号 {updateFields["roomNumber"]} 已存在"
-                        };
+                            return new ApiResponse<RoomDetailDto>
+                            {
+                                Success = false,
+                                Message = $"房间号 {newRoomNumber} 已存在"
+                            };
+                        }
                     }
                 }
 
@@ -337,6 +341,15 @@ namespace RoomDeviceManagement.Services
                     {
                         // 获取更新后的房间信息
                         var updatedRoom = await _chineseDbService.GetRoomByIdAsync(roomId);
+                        
+                        if (updatedRoom == null)
+                        {
+                            return new ApiResponse<RoomDetailDto>
+                            {
+                                Success = false,
+                                Message = "房间更新成功但无法获取更新后的信息"
+                            };
+                        }
                         
                         return new ApiResponse<RoomDetailDto>
                         {
@@ -488,6 +501,469 @@ namespace RoomDeviceManagement.Services
                 {
                     Success = false,
                     Message = $"获取房间统计信息失败: {ex.Message}"
+                };
+            }
+        }
+
+        // ===================================================================================
+        // 🏠 房间入住管理功能 - 集成到RoomManagementService中
+        // ===================================================================================
+
+        /// <summary>
+        /// 根据老人ID获取入住记录
+        /// </summary>
+        public async Task<ApiResponse<List<OccupancyRecordDto>>> GetOccupancyRecordsByElderlyIdAsync(decimal elderlyId)
+        {
+            try
+            {
+                _logger.LogInformation($"🔍 获取老人ID={elderlyId}的入住记录");
+
+                // 调用数据库服务获取真实数据
+                var records = await _chineseDbService.GetOccupancyRecordsByElderlyIdAsync((int)elderlyId);
+
+                var recordDtos = records.Select(r => new OccupancyRecordDto
+                {
+                    OccupancyId = r.OccupancyId,
+                    RoomId = r.RoomId,
+                    ElderlyId = r.ElderlyId,
+                    RoomNumber = r.RoomNumber,
+                    ElderlyName = r.ElderlyName,
+                    CheckInDate = r.CheckInDate,
+                    CheckOutDate = r.CheckOutDate,
+                    Status = r.Status,
+                    BedNumber = r.BedNumber,
+                    Remarks = r.Remarks,
+                    CreatedDate = r.CreatedDate,
+                    UpdatedDate = r.UpdatedDate
+                }).ToList();
+
+                _logger.LogInformation($"✅ 成功获取到 {recordDtos.Count} 条入住记录");
+                return new ApiResponse<List<OccupancyRecordDto>>
+                {
+                    Success = true,
+                    Message = $"成功获取到 {recordDtos.Count} 条入住记录",
+                    Data = recordDtos
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ 获取老人ID={elderlyId}的入住记录失败");
+                return new ApiResponse<List<OccupancyRecordDto>>
+                {
+                    Success = false,
+                    Message = $"获取入住记录失败: {ex.Message}",
+                    Data = new List<OccupancyRecordDto>()
+                };
+            }
+        }
+
+        /// <summary>
+        /// 办理入住登记
+        /// </summary>
+        public async Task<ApiResponse<OccupancyRecordDto>> CheckInAsync(CheckInDto checkInDto)
+        {
+            try
+            {
+                _logger.LogInformation($"🏠 办理入住登记: 老人ID={checkInDto.ElderlyId}, 房间ID={checkInDto.RoomId}");
+
+                // 调用数据库服务创建入住记录
+                var occupancyId = await _chineseDbService.CreateOccupancyRecordAsync(
+                    checkInDto.RoomId, 
+                    (int)checkInDto.ElderlyId, 
+                    checkInDto.CheckInDate, 
+                    checkInDto.BedNumber ?? "", 
+                    checkInDto.Remarks ?? ""
+                );
+
+                // 获取创建的入住记录详情
+                var createdRecord = await _chineseDbService.GetOccupancyRecordByIdAsync(occupancyId);
+                
+                if (createdRecord == null)
+                {
+                    throw new Exception("入住记录创建成功但无法获取详细信息");
+                }
+
+                var result = new OccupancyRecordDto
+                {
+                    OccupancyId = createdRecord.OccupancyId,
+                    RoomId = createdRecord.RoomId,
+                    ElderlyId = createdRecord.ElderlyId,
+                    RoomNumber = createdRecord.RoomNumber,
+                    ElderlyName = createdRecord.ElderlyName,
+                    CheckInDate = createdRecord.CheckInDate,
+                    CheckOutDate = createdRecord.CheckOutDate,
+                    Status = createdRecord.Status,
+                    BedNumber = createdRecord.BedNumber,
+                    Remarks = createdRecord.Remarks,
+                    CreatedDate = createdRecord.CreatedDate,
+                    UpdatedDate = createdRecord.UpdatedDate
+                };
+
+                return new ApiResponse<OccupancyRecordDto>
+                {
+                    Success = true,
+                    Message = "入住登记成功",
+                    Data = result
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ 入住登记失败");
+                return new ApiResponse<OccupancyRecordDto>
+                {
+                    Success = false,
+                    Message = $"入住登记失败: {ex.Message}",
+                    Data = null
+                };
+            }
+        }
+
+        /// <summary>
+        /// 办理退房登记
+        /// </summary>
+        public async Task<ApiResponse<OccupancyRecordDto>> CheckOutAsync(CheckOutDto checkOutDto)
+        {
+            try
+            {
+                _logger.LogInformation($"🚪 办理退房登记: 入住记录ID={checkOutDto.OccupancyId}");
+
+                // 调用数据库服务更新入住记录
+                var success = await _chineseDbService.UpdateOccupancyRecordAsync(
+                    checkOutDto.OccupancyId, 
+                    checkOutDto.CheckOutDate, 
+                    checkOutDto.Remarks ?? ""
+                );
+
+                if (!success)
+                {
+                    throw new Exception("未找到对应的入住记录或更新失败");
+                }
+
+                // 获取更新后的入住记录详情
+                var updatedRecord = await _chineseDbService.GetOccupancyRecordByIdAsync(checkOutDto.OccupancyId);
+                
+                if (updatedRecord == null)
+                {
+                    throw new Exception("退房记录更新成功但无法获取详细信息");
+                }
+
+                var result = new OccupancyRecordDto
+                {
+                    OccupancyId = updatedRecord.OccupancyId,
+                    RoomId = updatedRecord.RoomId,
+                    ElderlyId = updatedRecord.ElderlyId,
+                    RoomNumber = updatedRecord.RoomNumber,
+                    ElderlyName = updatedRecord.ElderlyName,
+                    CheckInDate = updatedRecord.CheckInDate,
+                    CheckOutDate = updatedRecord.CheckOutDate,
+                    Status = updatedRecord.Status,
+                    BedNumber = updatedRecord.BedNumber,
+                    Remarks = updatedRecord.Remarks,
+                    CreatedDate = updatedRecord.CreatedDate,
+                    UpdatedDate = updatedRecord.UpdatedDate
+                };
+
+                return new ApiResponse<OccupancyRecordDto>
+                {
+                    Success = true,
+                    Message = "退房登记成功",
+                    Data = result
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ 退房登记失败");
+                return new ApiResponse<OccupancyRecordDto>
+                {
+                    Success = false,
+                    Message = $"退房登记失败: {ex.Message}",
+                    Data = null
+                };
+            }
+        }
+
+        /// <summary>
+        /// 生成所有房间账单
+        /// </summary>
+        public async Task<ApiResponse<List<BillingRecordDto>>> GenerateAllBillingsAsync(GenerateBillDto generateDto)
+        {
+            try
+            {
+                _logger.LogInformation($"💰 生成所有房间账单: {generateDto.BillingStartDate:yyyy-MM-dd} 到 {generateDto.BillingEndDate:yyyy-MM-dd}");
+
+                // 获取需要生成账单的入住记录
+                var occupancyRecords = await _chineseDbService.GetOccupancyRecordsForBillingAsync(
+                    generateDto.BillingStartDate, 
+                    generateDto.BillingEndDate
+                );
+
+                var generatedBillings = new List<BillingRecordDto>();
+
+                foreach (var record in occupancyRecords)
+                {
+                    try
+                    {
+                        // 获取房间费率
+                        var roomRate = await _chineseDbService.GetRoomRateAsync(record.RoomId);
+                        
+                        // 创建账单记录
+                        var billingId = await _chineseDbService.CreateBillingRecordAsync(
+                            record.OccupancyId,
+                            record.ElderlyId,
+                            record.RoomId,
+                            generateDto.BillingStartDate,
+                            generateDto.BillingEndDate,
+                            roomRate
+                        );
+
+                        var days = (generateDto.BillingEndDate - generateDto.BillingStartDate).Days + 1;
+                        var totalAmount = roomRate * days;
+
+                        generatedBillings.Add(new BillingRecordDto
+                        {
+                            BillingId = billingId,
+                            OccupancyId = record.OccupancyId,
+                            ElderlyId = record.ElderlyId,
+                            ElderlyName = record.ElderlyName,
+                            RoomId = record.RoomId,
+                            RoomNumber = record.RoomNumber,
+                            BillingStartDate = generateDto.BillingStartDate,
+                            BillingEndDate = generateDto.BillingEndDate,
+                            Days = days,
+                            DailyRate = roomRate,
+                            TotalAmount = totalAmount,
+                            PaymentStatus = "未支付",
+                            PaidAmount = 0,
+                            UnpaidAmount = totalAmount,
+                            BillingDate = DateTime.Now,
+                            Remarks = generateDto.Remarks,
+                            CreatedDate = DateTime.Now,
+                            UpdatedDate = DateTime.Now
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, $"生成入住记录ID={record.OccupancyId}的账单失败，跳过");
+                    }
+                }
+
+                _logger.LogInformation($"✅ 成功生成 {generatedBillings.Count} 条账单记录");
+
+                return new ApiResponse<List<BillingRecordDto>>
+                {
+                    Success = true,
+                    Message = $"成功生成 {generatedBillings.Count} 条账单记录",
+                    Data = generatedBillings
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ 生成所有房间账单失败");
+                return new ApiResponse<List<BillingRecordDto>>
+                {
+                    Success = false,
+                    Message = $"生成账单失败: {ex.Message}",
+                    Data = new List<BillingRecordDto>()
+                };
+            }
+        }
+
+        /// <summary>
+        /// 根据老人ID生成账单
+        /// </summary>
+        public async Task<ApiResponse<List<BillingRecordDto>>> GenerateBillingsForElderlyAsync(decimal elderlyId, GenerateBillDto generateDto)
+        {
+            try
+            {
+                _logger.LogInformation($"💰 生成老人ID={elderlyId}的账单: {generateDto.BillingStartDate:yyyy-MM-dd} 到 {generateDto.BillingEndDate:yyyy-MM-dd}");
+
+                // 获取指定老人的入住记录
+                var occupancyRecords = await _chineseDbService.GetOccupancyRecordsForBillingAsync(
+                    generateDto.BillingStartDate, 
+                    generateDto.BillingEndDate, 
+                    (int)elderlyId
+                );
+
+                var generatedBillings = new List<BillingRecordDto>();
+
+                foreach (var record in occupancyRecords)
+                {
+                    try
+                    {
+                        // 获取房间费率
+                        var roomRate = await _chineseDbService.GetRoomRateAsync(record.RoomId);
+                        
+                        // 创建账单记录
+                        var billingId = await _chineseDbService.CreateBillingRecordAsync(
+                            record.OccupancyId,
+                            record.ElderlyId,
+                            record.RoomId,
+                            generateDto.BillingStartDate,
+                            generateDto.BillingEndDate,
+                            roomRate
+                        );
+
+                        var days = (generateDto.BillingEndDate - generateDto.BillingStartDate).Days + 1;
+                        var totalAmount = roomRate * days;
+
+                        generatedBillings.Add(new BillingRecordDto
+                        {
+                            BillingId = billingId,
+                            OccupancyId = record.OccupancyId,
+                            ElderlyId = record.ElderlyId,
+                            ElderlyName = record.ElderlyName,
+                            RoomId = record.RoomId,
+                            RoomNumber = record.RoomNumber,
+                            BillingStartDate = generateDto.BillingStartDate,
+                            BillingEndDate = generateDto.BillingEndDate,
+                            Days = days,
+                            DailyRate = roomRate,
+                            TotalAmount = totalAmount,
+                            PaymentStatus = "未支付",
+                            PaidAmount = 0,
+                            UnpaidAmount = totalAmount,
+                            BillingDate = DateTime.Now,
+                            Remarks = generateDto.Remarks,
+                            CreatedDate = DateTime.Now,
+                            UpdatedDate = DateTime.Now
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, $"生成入住记录ID={record.OccupancyId}的账单失败，跳过");
+                    }
+                }
+
+                _logger.LogInformation($"✅ 成功为老人ID={elderlyId}生成 {generatedBillings.Count} 条账单记录");
+
+                return new ApiResponse<List<BillingRecordDto>>
+                {
+                    Success = true,
+                    Message = $"成功为老人生成 {generatedBillings.Count} 条账单记录",
+                    Data = generatedBillings
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ 生成老人ID={elderlyId}的账单失败");
+                return new ApiResponse<List<BillingRecordDto>>
+                {
+                    Success = false,
+                    Message = $"生成账单失败: {ex.Message}",
+                    Data = new List<BillingRecordDto>()
+                };
+            }
+        }
+
+        /// <summary>
+        /// 获取账单记录（支持按老人ID筛选）
+        /// </summary>
+        public async Task<ApiResponse<PagedResult<BillingRecordDto>>> GetBillingRecordsAsync(PagedRequest request, decimal? elderlyId = null)
+        {
+            try
+            {
+                _logger.LogInformation($"🔍 获取账单记录，页码={request.Page}，每页={request.PageSize}，老人ID筛选={elderlyId}");
+
+                // 调用数据库服务获取分页账单记录
+                var (records, totalCount) = await _chineseDbService.GetBillingRecordsAsync(
+                    request.Page, 
+                    request.PageSize, 
+                    elderlyId.HasValue ? (int)elderlyId.Value : null
+                );
+
+                var billingDtos = records.Select(r => new BillingRecordDto
+                {
+                    BillingId = r.BillingId,
+                    OccupancyId = r.OccupancyId,
+                    ElderlyId = r.ElderlyId,
+                    ElderlyName = r.ElderlyName,
+                    RoomId = r.RoomId,
+                    RoomNumber = r.RoomNumber,
+                    BillingStartDate = r.BillingStartDate,
+                    BillingEndDate = r.BillingEndDate,
+                    Days = r.Days,
+                    DailyRate = r.RoomRate,
+                    TotalAmount = r.TotalAmount,
+                    PaymentStatus = r.PaymentStatus,
+                    PaidAmount = r.PaymentStatus == "已支付" ? r.TotalAmount : 0,
+                    UnpaidAmount = r.PaymentStatus == "已支付" ? 0 : r.TotalAmount,
+                    BillingDate = r.CreatedDate,
+                    PaymentDate = r.PaymentDate,
+                    CreatedDate = r.CreatedDate,
+                    UpdatedDate = r.UpdatedDate
+                }).ToList();
+
+                var result = new PagedResult<BillingRecordDto>
+                {
+                    Items = billingDtos,
+                    TotalCount = totalCount,
+                    Page = request.Page,
+                    PageSize = request.PageSize
+                };
+
+                _logger.LogInformation($"✅ 成功获取 {billingDtos.Count} 条账单记录，总数={totalCount}");
+
+                return new ApiResponse<PagedResult<BillingRecordDto>>
+                {
+                    Success = true,
+                    Message = $"成功获取 {billingDtos.Count} 条账单记录",
+                    Data = result
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ 获取账单记录失败");
+                return new ApiResponse<PagedResult<BillingRecordDto>>
+                {
+                    Success = false,
+                    Message = $"获取账单记录失败: {ex.Message}",
+                    Data = new PagedResult<BillingRecordDto>()
+                };
+            }
+        }
+
+        /// <summary>
+        /// 获取房间入住统计
+        /// </summary>
+        public async Task<ApiResponse<RoomOccupancyStatsDto>> GetOccupancyStatsAsync()
+        {
+            try
+            {
+                _logger.LogInformation("📊 获取房间入住统计");
+
+                // 调用数据库服务获取统计信息
+                var dbStats = await _chineseDbService.GetOccupancyStatsAsync();
+
+                // 将数据库返回的动态对象转换为强类型对象
+                var statsData = (dynamic)dbStats;
+                
+                var stats = new RoomOccupancyStatsDto
+                {
+                    TotalRooms = (int)statsData.TotalRooms,
+                    OccupiedRooms = (int)statsData.OccupiedRooms,
+                    AvailableRooms = (int)statsData.AvailableRooms,
+                    MaintenanceRooms = Math.Max(0, (int)statsData.TotalRooms - (int)statsData.OccupiedRooms - (int)statsData.AvailableRooms),
+                    OccupancyRate = Convert.ToDecimal(statsData.OccupancyRate),
+                    StatDate = DateTime.Now
+                };
+
+                _logger.LogInformation($"✅ 成功获取房间入住统计: 总房间={stats.TotalRooms}, 已入住={stats.OccupiedRooms}, 可用={stats.AvailableRooms}");
+
+                return new ApiResponse<RoomOccupancyStatsDto>
+                {
+                    Success = true,
+                    Message = "获取房间入住统计成功",
+                    Data = stats
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ 获取房间入住统计失败");
+                return new ApiResponse<RoomOccupancyStatsDto>
+                {
+                    Success = false,
+                    Message = $"获取统计失败: {ex.Message}",
+                    Data = null
                 };
             }
         }

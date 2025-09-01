@@ -328,4 +328,136 @@ namespace RoomDeviceManagement.DTOs
     {
     }
 
+    // ======== 房间入住管理 DTOs ========
+    
+    /// <summary>
+    /// 入住登记 DTO
+    /// </summary>
+    public class CheckInDto
+    {
+        [Required]
+        public decimal ElderlyId { get; set; }
+        
+        [Required]
+        public int RoomId { get; set; }
+        
+        public DateTime CheckInDate { get; set; } = DateTime.Now;
+        
+        [MaxLength(10)]
+        public string? BedNumber { get; set; }
+        
+        [MaxLength(200)]
+        public string? Remarks { get; set; }
+    }
+
+    /// <summary>
+    /// 退房登记 DTO
+    /// </summary>
+    public class CheckOutDto
+    {
+        [Required]
+        public int OccupancyId { get; set; }
+        
+        public DateTime CheckOutDate { get; set; } = DateTime.Now;
+        
+        [MaxLength(200)]
+        public string? Remarks { get; set; }
+    }
+
+    /// <summary>
+    /// 入住记录详情 DTO
+    /// </summary>
+    public class OccupancyRecordDto
+    {
+        public int OccupancyId { get; set; }
+        public int RoomId { get; set; }
+        public decimal ElderlyId { get; set; }
+        public string RoomNumber { get; set; } = string.Empty;
+        public string ElderlyName { get; set; } = string.Empty;
+        public DateTime CheckInDate { get; set; }
+        public DateTime? CheckOutDate { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string? BedNumber { get; set; }
+        public string? Remarks { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public DateTime UpdatedDate { get; set; }
+    }
+
+    /// <summary>
+    /// 生成账单请求 DTO
+    /// </summary>
+    public class GenerateBillDto
+    {
+        public decimal? ElderlyId { get; set; } // 如果为空则生成所有账单
+        
+        [Required]
+        public DateTime BillingStartDate { get; set; }
+        
+        [Required]
+        public DateTime BillingEndDate { get; set; }
+        
+        [Range(0.01, 999999.99)]
+        public decimal? DailyRate { get; set; } // 可以覆盖房间默认费率
+        
+        [MaxLength(500)]
+        public string? Remarks { get; set; }
+    }
+
+    /// <summary>
+    /// 账单记录 DTO
+    /// </summary>
+    public class BillingRecordDto
+    {
+        public int BillingId { get; set; }
+        public int OccupancyId { get; set; }
+        public decimal ElderlyId { get; set; }
+        public string ElderlyName { get; set; } = string.Empty;
+        public int RoomId { get; set; }
+        public string RoomNumber { get; set; } = string.Empty;
+        public DateTime BillingStartDate { get; set; }
+        public DateTime BillingEndDate { get; set; }
+        public int Days { get; set; }
+        public decimal DailyRate { get; set; }
+        public decimal TotalAmount { get; set; }
+        public string PaymentStatus { get; set; } = string.Empty;
+        public decimal PaidAmount { get; set; }
+        public decimal UnpaidAmount { get; set; }
+        public DateTime BillingDate { get; set; }
+        public DateTime? PaymentDate { get; set; }
+        public string? Remarks { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public DateTime UpdatedDate { get; set; }
+    }
+
+    /// <summary>
+    /// 支付账单 DTO
+    /// </summary>
+    public class PaymentDto
+    {
+        [Required]
+        public int BillingId { get; set; }
+        
+        [Required]
+        [Range(0.01, 999999.99)]
+        public decimal PaymentAmount { get; set; }
+        
+        public DateTime PaymentDate { get; set; } = DateTime.Now;
+        
+        [MaxLength(500)]
+        public string? PaymentRemarks { get; set; }
+    }
+
+    /// <summary>
+    /// 房间入住统计 DTO
+    /// </summary>
+    public class RoomOccupancyStatsDto
+    {
+        public int TotalRooms { get; set; }
+        public int OccupiedRooms { get; set; }
+        public int AvailableRooms { get; set; }
+        public int MaintenanceRooms { get; set; }
+        public decimal OccupancyRate { get; set; }
+        public DateTime StatDate { get; set; }
+    }
+
 }
