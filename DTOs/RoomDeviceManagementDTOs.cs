@@ -503,17 +503,4 @@ namespace RoomDeviceManagement.DTOs
         public string? PaymentRemarks { get; set; }
     }
 
-    /// <summary>
-    /// 房间入住统计 DTO
-    /// </summary>
-    public class RoomOccupancyStatsDto
-    {
-        public int TotalRooms { get; set; }
-        public int OccupiedRooms { get; set; }
-        public int AvailableRooms { get; set; }
-        public int MaintenanceRooms { get; set; }
-        public decimal OccupancyRate { get; set; }
-        public DateTime StatDate { get; set; }
-    }
-
 }

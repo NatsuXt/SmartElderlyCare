@@ -558,6 +558,64 @@ namespace RoomDeviceManagement.Services
         }
 
         /// <summary>
+        /// 获取所有入住记录（分页）
+        /// </summary>
+        public async Task<ApiResponse<PagedResult<OccupancyRecordDto>>> GetAllOccupancyRecordsAsync(PagedRequest request, string? status = null)
+        {
+            try
+            {
+                _logger.LogInformation($"🔍 获取所有入住记录: 页码={request.Page}, 大小={request.PageSize}, 状态筛选={status}");
+
+                // 调用数据库服务获取分页入住记录
+                var (records, totalCount) = await _chineseDbService.GetAllOccupancyRecordsAsync(
+                    request.Page, 
+                    request.PageSize, 
+                    status
+                );
+
+                var occupancyDtos = records.Select(r => new OccupancyRecordDto
+                {
+                    OccupancyId = r.OccupancyId,
+                    ElderlyId = r.ElderlyId,
+                    ElderlyName = r.ElderlyName,
+                    RoomId = r.RoomId,
+                    RoomNumber = r.RoomNumber,
+                    CheckInDate = r.CheckInDate,
+                    CheckOutDate = r.CheckOutDate,
+                    Status = r.Status,
+                    Remarks = r.Remarks,
+                    CreatedDate = r.CreatedDate,
+                    UpdatedDate = r.UpdatedDate
+                }).ToList();
+
+                var result = new PagedResult<OccupancyRecordDto>
+                {
+                    Items = occupancyDtos,
+                    TotalCount = totalCount,
+                    Page = request.Page,
+                    PageSize = request.PageSize
+                };
+
+                return new ApiResponse<PagedResult<OccupancyRecordDto>>
+                {
+                    Success = true,
+                    Message = $"成功获取入住记录，共{totalCount}条",
+                    Data = result
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ 获取所有入住记录失败");
+                return new ApiResponse<PagedResult<OccupancyRecordDto>>
+                {
+                    Success = false,
+                    Message = $"获取入住记录失败: {ex.Message}",
+                    Data = new PagedResult<OccupancyRecordDto>()
+                };
+            }
+        }
+
+        /// <summary>
         /// 办理入住登记
         /// </summary>
         public async Task<ApiResponse<OccupancyRecordDto>> CheckInAsync(CheckInDto checkInDto)
@@ -703,20 +761,58 @@ namespace RoomDeviceManagement.Services
                 {
                     try
                     {
+                        // 检查是否已存在该时间段的账单
+                        bool billingExists = await _chineseDbService.BillingExistsAsync(
+                            record.OccupancyId,
+                            generateDto.BillingStartDate,
+                            generateDto.BillingEndDate
+                        );
+
+                        if (billingExists)
+                        {
+                            _logger.LogWarning($"入住记录ID={record.OccupancyId}在{generateDto.BillingStartDate:yyyy-MM-dd}到{generateDto.BillingEndDate:yyyy-MM-dd}期间已存在账单，跳过生成");
+                            continue;
+                        }
+
                         // 获取房间费率
                         var roomRate = await _chineseDbService.GetRoomRateAsync(record.RoomId);
                         
-                        // 创建账单记录
+                        // 计算实际应收费天数（避免为未来时间收费）
+                        var actualBillingStartDate = generateDto.BillingStartDate > record.CheckInDate ? generateDto.BillingStartDate : record.CheckInDate;
+                        var actualBillingEndDate = generateDto.BillingEndDate;
+                        
+                        // 如果老人已退房，账单结束日期不能超过退房日期
+                        if (record.CheckOutDate.HasValue && record.CheckOutDate.Value < generateDto.BillingEndDate)
+                        {
+                            actualBillingEndDate = record.CheckOutDate.Value;
+                        }
+                        
+                        // 如果账单结束日期在未来，只收费到今天
+                        var today = DateTime.Today;
+                        if (actualBillingEndDate > today)
+                        {
+                            actualBillingEndDate = today;
+                            _logger.LogInformation($"账单结束日期调整为今天({today:yyyy-MM-dd})，避免为未来时间收费");
+                        }
+                        
+                        // 如果调整后的开始日期晚于结束日期，跳过生成
+                        if (actualBillingStartDate > actualBillingEndDate)
+                        {
+                            _logger.LogWarning($"入住记录ID={record.OccupancyId}的实际账单期间无效，跳过生成");
+                            continue;
+                        }
+                        
+                        // 创建账单记录（使用调整后的日期）
                         var billingId = await _chineseDbService.CreateBillingRecordAsync(
                             record.OccupancyId,
                             record.ElderlyId,
                             record.RoomId,
-                            generateDto.BillingStartDate,
-                            generateDto.BillingEndDate,
+                            actualBillingStartDate,
+                            actualBillingEndDate,
                             roomRate
                         );
 
-                        var days = (generateDto.BillingEndDate - generateDto.BillingStartDate).Days + 1;
+                        var days = (actualBillingEndDate - actualBillingStartDate).Days + 1;
                         var totalAmount = roomRate * days;
 
                         generatedBillings.Add(new BillingRecordDto
@@ -727,8 +823,8 @@ namespace RoomDeviceManagement.Services
                             ElderlyName = record.ElderlyName,
                             RoomId = record.RoomId,
                             RoomNumber = record.RoomNumber,
-                            BillingStartDate = generateDto.BillingStartDate,
-                            BillingEndDate = generateDto.BillingEndDate,
+                            BillingStartDate = actualBillingStartDate,
+                            BillingEndDate = actualBillingEndDate,
                             Days = days,
                             DailyRate = roomRate,
                             TotalAmount = totalAmount,
@@ -790,20 +886,58 @@ namespace RoomDeviceManagement.Services
                 {
                     try
                     {
+                        // 检查是否已存在该时间段的账单
+                        bool billingExists = await _chineseDbService.BillingExistsAsync(
+                            record.OccupancyId,
+                            generateDto.BillingStartDate,
+                            generateDto.BillingEndDate
+                        );
+
+                        if (billingExists)
+                        {
+                            _logger.LogWarning($"老人ID={elderlyId}的入住记录ID={record.OccupancyId}在{generateDto.BillingStartDate:yyyy-MM-dd}到{generateDto.BillingEndDate:yyyy-MM-dd}期间已存在账单，跳过生成");
+                            continue;
+                        }
+
                         // 获取房间费率
                         var roomRate = await _chineseDbService.GetRoomRateAsync(record.RoomId);
                         
-                        // 创建账单记录
+                        // 计算实际应收费天数（避免为未来时间收费）
+                        var actualBillingStartDate = generateDto.BillingStartDate > record.CheckInDate ? generateDto.BillingStartDate : record.CheckInDate;
+                        var actualBillingEndDate = generateDto.BillingEndDate;
+                        
+                        // 如果老人已退房，账单结束日期不能超过退房日期
+                        if (record.CheckOutDate.HasValue && record.CheckOutDate.Value < generateDto.BillingEndDate)
+                        {
+                            actualBillingEndDate = record.CheckOutDate.Value;
+                        }
+                        
+                        // 如果账单结束日期在未来，只收费到今天
+                        var today = DateTime.Today;
+                        if (actualBillingEndDate > today)
+                        {
+                            actualBillingEndDate = today;
+                            _logger.LogInformation($"老人ID={elderlyId}账单结束日期调整为今天({today:yyyy-MM-dd})，避免为未来时间收费");
+                        }
+                        
+                        // 如果调整后的开始日期晚于结束日期，跳过生成
+                        if (actualBillingStartDate > actualBillingEndDate)
+                        {
+                            _logger.LogWarning($"老人ID={elderlyId}的入住记录ID={record.OccupancyId}的实际账单期间无效，跳过生成");
+                            continue;
+                        }
+                        
+                        // 创建账单记录（使用调整后的日期）
                         var billingId = await _chineseDbService.CreateBillingRecordAsync(
                             record.OccupancyId,
                             record.ElderlyId,
                             record.RoomId,
-                            generateDto.BillingStartDate,
-                            generateDto.BillingEndDate,
+                            actualBillingStartDate,
+                            actualBillingEndDate,
                             roomRate
                         );
 
-                        var days = (generateDto.BillingEndDate - generateDto.BillingStartDate).Days + 1;
+                        var days = (actualBillingEndDate - actualBillingStartDate).Days + 1;
                         var totalAmount = roomRate * days;
 
                         generatedBillings.Add(new BillingRecordDto
@@ -814,8 +948,8 @@ namespace RoomDeviceManagement.Services
                             ElderlyName = record.ElderlyName,
                             RoomId = record.RoomId,
                             RoomNumber = record.RoomNumber,
-                            BillingStartDate = generateDto.BillingStartDate,
-                            BillingEndDate = generateDto.BillingEndDate,
+                            BillingStartDate = actualBillingStartDate,
+                            BillingEndDate = actualBillingEndDate,
                             Days = days,
                             DailyRate = roomRate,
                             TotalAmount = totalAmount,
@@ -885,8 +1019,8 @@ namespace RoomDeviceManagement.Services
                     DailyRate = r.RoomRate,
                     TotalAmount = r.TotalAmount,
                     PaymentStatus = r.PaymentStatus,
-                    PaidAmount = r.PaymentStatus == "已支付" ? r.TotalAmount : 0,
-                    UnpaidAmount = r.PaymentStatus == "已支付" ? 0 : r.TotalAmount,
+                    PaidAmount = r.PaidAmount,  // 使用数据库中的实际已支付金额
+                    UnpaidAmount = r.UnpaidAmount,  // 使用数据库中的实际未支付金额
                     BillingDate = r.CreatedDate,
                     PaymentDate = r.PaymentDate,
                     CreatedDate = r.CreatedDate,
@@ -918,52 +1052,6 @@ namespace RoomDeviceManagement.Services
                     Success = false,
                     Message = $"获取账单记录失败: {ex.Message}",
                     Data = new PagedResult<BillingRecordDto>()
-                };
-            }
-        }
-
-        /// <summary>
-        /// 获取房间入住统计
-        /// </summary>
-        public async Task<ApiResponse<RoomOccupancyStatsDto>> GetOccupancyStatsAsync()
-        {
-            try
-            {
-                _logger.LogInformation("📊 获取房间入住统计");
-
-                // 调用数据库服务获取统计信息
-                var dbStats = await _chineseDbService.GetOccupancyStatsAsync();
-
-                // 将数据库返回的动态对象转换为强类型对象
-                var statsData = (dynamic)dbStats;
-                
-                var stats = new RoomOccupancyStatsDto
-                {
-                    TotalRooms = (int)statsData.TotalRooms,
-                    OccupiedRooms = (int)statsData.OccupiedRooms,
-                    AvailableRooms = (int)statsData.AvailableRooms,
-                    MaintenanceRooms = Math.Max(0, (int)statsData.TotalRooms - (int)statsData.OccupiedRooms - (int)statsData.AvailableRooms),
-                    OccupancyRate = Convert.ToDecimal(statsData.OccupancyRate),
-                    StatDate = DateTime.Now
-                };
-
-                _logger.LogInformation($"✅ 成功获取房间入住统计: 总房间={stats.TotalRooms}, 已入住={stats.OccupiedRooms}, 可用={stats.AvailableRooms}");
-
-                return new ApiResponse<RoomOccupancyStatsDto>
-                {
-                    Success = true,
-                    Message = "获取房间入住统计成功",
-                    Data = stats
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ 获取房间入住统计失败");
-                return new ApiResponse<RoomOccupancyStatsDto>
-                {
-                    Success = false,
-                    Message = $"获取统计失败: {ex.Message}",
-                    Data = null
                 };
             }
         }

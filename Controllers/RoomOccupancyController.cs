@@ -325,17 +325,31 @@ namespace RoomDeviceManagement.Controllers
         }
 
         /// <summary>
-        /// 获取房间入住统计信息
+        /// 获取所有入住记录（分页）
         /// </summary>
-        /// <returns>房间入住统计</returns>
-        [HttpGet("stats")]
-        public async Task<ActionResult<ApiResponse<RoomOccupancyStatsDto>>> GetOccupancyStats()
+        /// <param name="page">页码</param>
+        /// <param name="pageSize">每页大小</param>
+        /// <param name="status">入住状态筛选</param>
+        /// <returns>分页的入住记录</returns>
+        [HttpGet("occupancy-records")]
+        public async Task<ActionResult<ApiResponse<PagedResult<OccupancyRecordDto>>>> GetAllOccupancyRecords(
+            [FromQuery] int page = 1, 
+            [FromQuery] int pageSize = 20,
+            [FromQuery] string? status = null)
         {
             try
             {
-                _logger.LogInformation("📊 API请求：获取房间入住统计");
+                _logger.LogInformation($"🔍 API请求：获取所有入住记录，页码={page}，每页={pageSize}，状态筛选={status}");
                 
-                var result = await _roomManagementService.GetOccupancyStatsAsync();
+                // 创建分页请求
+                var request = new PagedRequest 
+                { 
+                    Page = page, 
+                    PageSize = pageSize 
+                };
+
+                // 调用服务层获取入住记录
+                var result = await _roomManagementService.GetAllOccupancyRecordsAsync(request, status);
                 
                 if (result.Success)
                 {
@@ -346,52 +360,12 @@ namespace RoomDeviceManagement.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "获取房间入住统计API异常");
-                return StatusCode(500, new ApiResponse<RoomOccupancyStatsDto>
-                {
-                    Success = false,
-                    Message = "服务器内部错误",
-                    Data = null
-                });
-            }
-        }
-
-        /// <summary>
-        /// 获取所有入住记录（分页）
-        /// </summary>
-        /// <param name="page">页码</param>
-        /// <param name="pageSize">每页大小</param>
-        /// <param name="status">入住状态筛选</param>
-        /// <returns>分页的入住记录</returns>
-        [HttpGet("occupancy-records")]
-        public async Task<ActionResult<ApiResponse<List<OccupancyRecordDto>>>> GetAllOccupancyRecords(
-            [FromQuery] int page = 1, 
-            [FromQuery] int pageSize = 20,
-            [FromQuery] string? status = null)
-        {
-            try
-            {
-                _logger.LogInformation($"🔍 API请求：获取所有入住记录，页码={page}，每页={pageSize}，状态筛选={status}");
-                
-                // 这里可以根据需要实现分页和状态筛选
-                // 为简化演示，直接返回一个空列表，实际项目中应该实现完整的分页逻辑
-                var result = new ApiResponse<List<OccupancyRecordDto>>
-                {
-                    Success = true,
-                    Message = "功能开发中，暂时返回空列表",
-                    Data = new List<OccupancyRecordDto>()
-                };
-                
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
                 _logger.LogError(ex, "获取所有入住记录API异常");
-                return StatusCode(500, new ApiResponse<List<OccupancyRecordDto>>
+                return StatusCode(500, new ApiResponse<PagedResult<OccupancyRecordDto>>
                 {
                     Success = false,
                     Message = "服务器内部错误",
-                    Data = new List<OccupancyRecordDto>()
+                    Data = new PagedResult<OccupancyRecordDto>()
                 });
             }
         }
