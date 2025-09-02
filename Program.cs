@@ -102,6 +102,20 @@ async Task TestAllApis(string testBaseUrl = "http://localhost:5000")
         {
             Console.WriteLine($"❌ 设备创建失败: {deviceResponse.StatusCode}");
         }
+
+        Console.WriteLine("\n🏨 测试房间入住管理API");
+        
+        // 测试系统健康检查
+        var testResponse = await client.GetAsync($"{testBaseUrl}/api/RoomOccupancy/test");
+        if (testResponse.IsSuccessStatusCode)
+        {
+            var testResult = await testResponse.Content.ReadAsStringAsync();
+            Console.WriteLine($"✅ 房间入住系统健康检查: {testResult}");
+        }
+        else
+        {
+            Console.WriteLine($"❌ 房间入住系统检查失败: {testResponse.StatusCode}");
+        }
         
         Console.WriteLine("\n✅ API测试完成!");
         
@@ -155,6 +169,7 @@ builder.Services.AddSwaggerGen(c =>
 // 注册核心服务 - 确保中文字符支持
 builder.Services.AddScoped<ChineseCompatibleDatabaseService>(); // 🆕 中文兼容数据库服务
 builder.Services.AddScoped<RoomManagementService>();
+builder.Services.AddScoped<RoomOccupancyService>(); // 🆕 房间入住管理服务
 builder.Services.AddScoped<DeviceManagementService>();
 builder.Services.AddScoped<ElectronicFenceService>();
 builder.Services.AddScoped<HealthMonitoringService>();
@@ -235,6 +250,7 @@ Console.WriteLine("🚀 智慧养老系统 - 房间与设备管理模块 API 服
 Console.WriteLine($"📍 API文档地址：{baseUrl}/swagger");
 Console.WriteLine();
 Console.WriteLine("📌 主要业务 API 模块：");
+Console.WriteLine("   房间入住：/api/RoomOccupancy/* (12个端点)"); // 🆕 房间入住管理
 Console.WriteLine("   设备管理：/api/DeviceManagement/* (6个端点)");
 Console.WriteLine("   房间管理：/api/RoomManagement/* (6个端点)");
 Console.WriteLine("   健康监测：/api/HealthMonitoring/* (5个端点)");
@@ -242,7 +258,8 @@ Console.WriteLine("   电子围栏：/api/ElectronicFence/* (11个端点)");
 Console.WriteLine("   IoT监控：/api/IoTMonitoring/* (5个端点)");
 Console.WriteLine();
 Console.WriteLine("📌 核心功能简介：");
-Console.WriteLine("   🏠 房间管理：房间信息CRUD、容量统计、状态管理");
+Console.WriteLine("   � 房间入住：入住登记、退房管理、账单生成、支付处理"); // 🆕 房间入住管理功能
+Console.WriteLine("   �🏠 房间管理：房间信息CRUD、容量统计、状态管理");
 Console.WriteLine("   📱 设备管理：设备监控、故障检测、维护记录");
 Console.WriteLine("   💓 健康监测：生命体征采集、数据上报、历史记录");
 Console.WriteLine("   🔒 电子围栏：GPS追踪、越界警报、活动轨迹");

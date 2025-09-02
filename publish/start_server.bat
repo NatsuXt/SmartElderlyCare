@@ -1,58 +1,52 @@
 @echo off
-REM 智慧养老系统 - 服务器启动脚本
-REM 服务器: 47.96.238.102
+REM 智慧养老系统 - 房间入住管理模块启动脚本 (Windows版本)
+REM 版本: v2.0
+REM 构建日期: 2025年9月2日
 
-echo ========================================
-echo 智慧养老系统 - 服务器启动
-echo ========================================
+echo === 🚀 智慧养老系统启动脚本 v2.0 ===
+echo 功能模块: 房间入住管理 + 设备管理 + 健康监测 + 电子围栏
+echo 构建时间: 2025年9月2日 10:45
 echo.
 
-REM 设置Oracle环境变量
-set NLS_LANG=SIMPLIFIED CHINESE_CHINA.AL32UTF8
-set ORA_NCHAR_LITERAL_REPLACE=TRUE
+REM 检查.NET环境
+echo 🔍 检查.NET运行环境...
+dotnet --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo ❌ 未找到.NET运行环境，请先安装.NET 8.0 Runtime
+    pause
+    exit /b 1
+)
+
+dotnet --version
+echo ✅ .NET环境检查通过
+echo.
+
+REM 检查端口占用
+echo 🔍 检查端口3003占用情况...
+netstat -an | find "3003" | find "LISTENING" >nul 2>&1
+if %errorlevel% equ 0 (
+    echo ⚠️ 端口3003已被占用，请手动停止占用端口的进程
+    echo 可以使用命令: netstat -ano | findstr :3003
+    echo 然后使用: taskkill /PID <进程ID> /F
+    pause
+)
+
+echo ✅ 端口3003可用
+echo.
+
+REM 启动应用
+echo 🚀 启动智慧养老系统...
+echo 📍 访问地址: http://47.96.238.102:3003/swagger
+echo 🏨 房间入住管理: /api/RoomOccupancy/*
+echo.
+
+REM 设置环境变量
 set ASPNETCORE_ENVIRONMENT=Production
+set DOTNET_URLS=http://*:3003
 
-echo 设置Oracle字符编码环境...
-echo NLS_LANG=%NLS_LANG%
-echo ORA_NCHAR_LITERAL_REPLACE=%ORA_NCHAR_LITERAL_REPLACE%
-echo ASPNETCORE_ENVIRONMENT=%ASPNETCORE_ENVIRONMENT%
-echo.
-
-REM 使用当前目录作为应用目录（更灵活的部署方式）
-echo 当前目录: %CD%
-echo 提示: 可以将应用部署到任意目录，如桌面的 RoomManagement_Modules 文件夹
-echo.
-
-REM 检查.NET Runtime
-echo 检查.NET Runtime...
-dotnet --info
-if errorlevel 1 (
-    echo 错误: .NET 8.0 Runtime 未安装
-    echo 请下载并安装: https://dotnet.microsoft.com/download/dotnet/8.0
-    pause
-    exit /b 1
-)
-echo.
-
-REM 检查应用文件
-if not exist "RoomDeviceManagement.dll" (
-    echo 错误: 应用文件不存在
-    echo 请确保已解压部署包到当前目录
-    pause
-    exit /b 1
-)
-
-echo 启动智慧养老系统...
-echo 服务器地址: 47.96.238.102
-echo 预期访问地址: http://47.96.238.102:8080/swagger
-echo 注意: 如果8080端口被占用，应用可能会自动选择其他端口
-echo 按 Ctrl+C 停止服务
-echo.
-
-REM 启动应用并显示详细输出
-echo 正在启动应用...
+REM 启动应用
 dotnet RoomDeviceManagement.dll
 
 echo.
-echo 应用已停止
+echo 📋 应用已停止运行
 pause
