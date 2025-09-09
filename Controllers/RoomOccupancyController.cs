@@ -169,7 +169,7 @@ namespace RoomDeviceManagement.Controllers
         {
             try
             {
-                _logger.LogInformation($"💰 API请求：生成所有房间账单，时间段={generateDto.BillingStartDate:yyyy-MM-dd}到{generateDto.BillingEndDate:yyyy-MM-dd}");
+                _logger.LogInformation("💰 API请求：智能一键生成所有入住记录的账单（无时间限制，防重复生成）");
                 
                 if (!ModelState.IsValid)
                 {
