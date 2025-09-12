@@ -1,0 +1,19 @@
+# VS Code Remote Development Configuration
+
+# SSH Config for Windows Server
+# Add this to your local ~/.ssh/config file
+
+Host smart-elderly-server
+    HostName 47.96.238.102
+    User Administrator
+    Port 22
+    # Uncomment if using key authentication
+    # IdentityFile ~/.ssh/id_rsa
+    
+# Remote development settings
+Host smart-elderly-dev
+    HostName 47.96.238.102
+    User Administrator
+    Port 22
+    RemoteCommand cd C:\SmartElderlyCare && powershell
+    RequestTTY yes

@@ -1,0 +1,7 @@
+E:\MyTest\database_keshe\bin\Debug\net8.0\RoomDeviceManagement.exe
+E:\MyTest\database_keshe\bin\Debug\net8.0\RoomDeviceManagement.dll
+E:\MyTest\database_keshe\bin\Debug\net8.0\Microsoft.OpenApi.dll
+E:\MyTest\database_keshe\bin\Debug\net8.0\Oracle.ManagedDataAccess.dll
+E:\MyTest\database_keshe\bin\Debug\net8.0\Swashbuckle.AspNetCore.Swagger.dll
+E:\MyTest\database_keshe\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+E:\MyTest\database_keshe\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerUI.dll

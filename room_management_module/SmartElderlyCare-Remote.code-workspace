@@ -1,0 +1,32 @@
+{
+    "folders": [
+        {
+            "name": "Smart Elderly Care - Local",
+            "path": "."
+        }
+    ],
+    "settings": {
+        "terminal.integrated.defaultProfile.windows": "PowerShell",
+        "terminal.integrated.profiles.windows": {
+            "PowerShell": {
+                "source": "PowerShell",
+                "args": ["-NoExit"]
+            }
+        },
+        "dotnet.defaultSolution": "RoomDeviceManagement.sln",
+        "omnisharp.useModernNet": true,
+        "omnisharp.enableRoslynAnalyzers": true
+    },
+    "extensions": {
+        "recommendations": [
+            "ms-dotnettools.csharp",
+            "ms-dotnettools.csdevkit",
+            "ms-vscode-remote.remote-ssh",
+            "ms-vscode-remote.remote-containers",
+            "ms-vscode.powershell",
+            "oracle.oracledevtools"
+        ]
+    },
+    "remoteAuthority": "",
+    "remote.SSH.configFile": ".vscode/ssh-config"
+}
