@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ElderlyCareSystem.Models
 {
-    [Table("MEDICALORDERS")]
+    [Table("MEDICALORDER")]
     public class MedicalOrder
     {
         [Key]

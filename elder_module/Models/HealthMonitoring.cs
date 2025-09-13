@@ -22,7 +22,7 @@ namespace ElderlyCareSystem.Models
         public int? HeartRate { get; set; }
 
         [Column("BLOOD_PRESSURE"), MaxLength(20)]
-        public string BloodPressure { get; set; }
+        public string? BloodPressure { get; set; }
 
         [Column("OXYGEN_LEVEL")]
         public float? OxygenLevel { get; set; }

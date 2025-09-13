@@ -45,13 +45,13 @@ namespace ElderlyCareSystem.Dtos
     public class ElderlyInfoDto
     {
         public int ElderlyId { get; set; }
-        public string Name { get; set; }
-        public string Gender { get; set; }
+        public string? Name { get; set; }             // ? 表示可空
+        public string? Gender { get; set; }
         public DateTime? BirthDate { get; set; }
-        public string IdCardNumber { get; set; }
-        public string ContactPhone { get; set; }
-        public string Address { get; set; }
-        public string EmergencyContact { get; set; }
+        public string? IdCardNumber { get; set; }
+        public string? ContactPhone { get; set; }
+        public string? Address { get; set; }
+        public string? EmergencyContact { get; set; }
     }
 
     public class FamilyInfoDto
@@ -94,7 +94,7 @@ namespace ElderlyCareSystem.Dtos
     {
         public int PlanId { get; set; }
         public int ElderlyId { get; set; }
-        public int StaffId { get; set; }
+        public int? StaffId { get; set; }
         public DateTime PlanStartDate { get; set; }
         public DateTime PlanEndDate { get; set; }
         public string CareType { get; set; }

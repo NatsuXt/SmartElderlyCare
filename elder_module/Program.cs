@@ -1,12 +1,15 @@
 using ElderlyCareSystem.Data;
 using ElderlyCareSystem.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.JsonPatch;
 
+using Microsoft.AspNetCore.Mvc;  // 基础 MVC
+using Microsoft.Extensions.DependencyInjection; // IServiceCollection 扩展方法
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. 配置数据库连接字符串，假设你用的是 SQL Server
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseOracle(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 
 // 2. 注入 CheckInService
 builder.Services.AddScoped<ElderlyFullRegistrationService>();
@@ -17,13 +20,25 @@ builder.Services.AddScoped<DietRecommendationService>();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<QianfanService>();
 builder.Services.AddScoped<DietRecommendationService>();
+builder.Services.AddScoped< ElderlyInfoService>();
+builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<FamilyService>();
+
 builder.Services.AddSwaggerGen(c =>
 {
     var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
     c.IncludeXmlComments(xmlPath); 
 });
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 // 3. 添加控制器服务
 builder.Services.AddControllers();
 
@@ -34,14 +49,19 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // 5. 中间件配置
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
+//app.UseHttpsRedirection();
+// 默认页面跳转到 Swagger
+app.MapGet("/", context =>
+{
+    context.Response.Redirect("/swagger");
+    return Task.CompletedTask;
+});
 app.UseAuthorization();
 
 app.MapControllers();

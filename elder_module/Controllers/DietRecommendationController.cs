@@ -64,5 +64,26 @@ public class DietRecommendationController : ControllerBase
         return Ok("已成功设置为“已执行”");
     }
 
+    /// <summary>
+    /// 删除指定的饮食建议
+    /// </summary>
+    /// <param name="recommendationId">要删除的饮食建议的唯一ID</param>
+    /// <returns>
+    /// 如果删除成功，返回 HTTP 204 No Content；
+    /// 如果指定ID不存在，返回 HTTP 404 Not Found。
+    /// </returns>
+    [HttpDelete("{recommendationId}")]
+    public async Task<IActionResult> Delete(int recommendationId)
+    {
+        // 调用服务层删除指定ID的饮食建议
+        var success = await _service.DeleteRecommendationAsync(recommendationId);
+
+        // 如果删除失败（未找到该记录），返回 404
+        if (!success) return NotFound("未找到该饮食建议");
+
+        // 删除成功，返回 204 No Content，不返回具体内容
+        return NoContent();
+    }
+
 
 }

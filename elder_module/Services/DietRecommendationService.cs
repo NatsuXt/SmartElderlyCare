@@ -107,6 +107,15 @@ namespace ElderlyCareSystem.Services
                 })
                 .FirstOrDefaultAsync();
         }
+        public async Task<bool> DeleteRecommendationAsync(int recommendationId)
+        {
+            var recommendation = await _context.DietRecommendations.FindAsync(recommendationId);
+            if (recommendation == null) return false;
+
+            _context.DietRecommendations.Remove(recommendation);
+            await _context.SaveChangesAsync();
+            return true;
+        }
 
     }
 }
