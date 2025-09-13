@@ -22,13 +22,13 @@ namespace ElderlyCareSystem.Models
         public string Status { get; set; }
 
         [Column("REGISTRATION_TIME")]
-        public DateTime? RegistrationTime { get; set; }
+        public DateTime RegistrationTime { get; set; }
 
         [Column("CHECK_IN_TIME")]
         public DateTime? CheckInTime { get; set; }
 
         [Column("FEEDBACK")]
-        public string Feedback { get; set; }
+        public string? Feedback { get; set; }
 
         public ElderlyInfo Elderly { get; set; }
     }

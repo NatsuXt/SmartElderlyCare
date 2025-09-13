@@ -31,8 +31,17 @@ namespace ElderlyCareSystem.Data
         public DbSet<HealthThreshold> HealthThresholds { get; set; }
         public DbSet<VoiceAssistantReminder> VoiceAssistantReminders { get; set; }
 
-        //访客登记表(VisitorRegistration)   
+
+        public DbSet<RoomOccupancy> RoomOccupancys { get; set; }
+
+        public DbSet<RoomManagement> RoomManagements { get; set; }
+
+        public DbSet<RoomBilling> RoomBillings { get; set; }
+
+        public DbSet<FenceLog> FenceLogs { get; set; }
         public DbSet<VisitorRegistration> VisitorRegistrations { get; set; }
+
+        public DbSet<ElectronicFence> ElectronicFences { get; set; }
 
         //protected override void OnModelCreating(ModelBuilder modelBuilder)
         //{

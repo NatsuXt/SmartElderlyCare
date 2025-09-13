@@ -107,17 +107,34 @@ namespace ElderlyCareSystem.Services
                 var elderly = await _context.ElderlyInfos.FindAsync(elderlyId);
                 if (elderly == null) return false;
 
-                // 1. 删除依赖 MedicalOrders 的 VoiceAssistantReminders
+                var occupancyIds = await _context.RoomOccupancys
+                    .Where(r => r.ElderlyId == elderlyId)
+                    .Select(r => r.OccupancyId)
+                    .ToListAsync();
+
+                if (occupancyIds.Any())
+                {
+                    await _context.RoomBillings
+                        .Where(b => occupancyIds.Contains(b.OccupancyId))
+                        .ExecuteDeleteAsync();
+                }
+
+                // 删除 RoomOccupancy
+                await _context.RoomOccupancys
+                    .Where(r => r.ElderlyId == elderlyId)
+                    .ExecuteDeleteAsync();
+
+                // 删除 VoiceAssistantReminders
                 await _context.VoiceAssistantReminders
                     .Where(v => v.ElderlyId == elderlyId)
                     .ExecuteDeleteAsync();
 
-                // 2. 删除 MedicalOrders
+                // 删除 MedicalOrders
                 await _context.MedicalOrders
                     .Where(m => m.ElderlyId == elderlyId)
                     .ExecuteDeleteAsync();
 
-                // 3. 删除其他直接依赖 ElderlyInfo 的表
+                // 删除其他直接依赖 ElderlyInfo 的表
                 await _context.ActivityParticipations
                     .Where(a => a.ElderlyId == elderlyId)
                     .ExecuteDeleteAsync();
@@ -150,7 +167,7 @@ namespace ElderlyCareSystem.Services
                     .Where(n => n.ElderlyId == elderlyId)
                     .ExecuteDeleteAsync();
 
-                // 4. 删除 FamilyAccount（必须先删子表）
+                // 删除 FamilyAccount（必须先删子表）
                 await _context.FamilyAccounts
                     .Where(fa => _context.FamilyInfos
                         .Where(fi => fi.ElderlyId == elderlyId)
@@ -158,12 +175,12 @@ namespace ElderlyCareSystem.Services
                         .Contains(fa.FamilyId))
                     .ExecuteDeleteAsync();
 
-                // 5. 删除 FamilyInfo
+                // 删除 FamilyInfo
                 await _context.FamilyInfos
                     .Where(f => f.ElderlyId == elderlyId)
                     .ExecuteDeleteAsync();
 
-                // 6. 删除 FeeDetails 与 FeeSettlements
+                // 删除 FeeDetails 与 FeeSettlements
                 var feeSettlementIds = await _context.FeeSettlements
                     .Where(f => f.ElderlyId == elderlyId)
                     .Select(f => f.SettlementId)
@@ -179,10 +196,23 @@ namespace ElderlyCareSystem.Services
                         .Where(f => f.ElderlyId == elderlyId)
                         .ExecuteDeleteAsync();
                 }
+
+                // 删除 ElderlyAccounts
                 await _context.ElderlyAccounts
-                .Where(a => a.ElderlyId == elderlyId)
-                .ExecuteDeleteAsync();
-                // 7. 删除 ElderlyInfo 本身
+                    .Where(a => a.ElderlyId == elderlyId)
+                    .ExecuteDeleteAsync();
+
+                // --- 新增删除 FENCELOG ---
+                await _context.FenceLogs
+                    .Where(f => f.ElderlyId == elderlyId)
+                    .ExecuteDeleteAsync();
+
+                // --- 新增删除 VISITORREGISTRATION ---
+                await _context.VisitorRegistrations
+                    .Where(v => v.elderly_id == elderlyId)
+                    .ExecuteDeleteAsync();
+
+                // 删除 ElderlyInfo 本身
                 _context.ElderlyInfos.Remove(elderly);
 
                 await _context.SaveChangesAsync();
@@ -196,6 +226,7 @@ namespace ElderlyCareSystem.Services
                 throw;
             }
         }
+
 
 
     }
