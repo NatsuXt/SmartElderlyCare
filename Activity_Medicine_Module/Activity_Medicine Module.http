@@ -1,6 +1,0 @@
-@Activity_Medicine_Module_HostAddress = http://localhost:5161
-
-GET {{Activity_Medicine_Module_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
