@@ -346,13 +346,13 @@ namespace RoomDeviceManagement.Services
         }
 
         /// <summary>
-        /// 生成所有房间账单
+        /// 生成所有房间的月度账单
         /// </summary>
         public async Task<ApiResponse<List<BillingRecordDto>>> GenerateAllBillingsAsync(GenerateBillDto generateDto)
         {
             try
             {
-                _logger.LogInformation($"💰 生成所有房间账单: {generateDto.BillingStartDate:yyyy-MM-dd} 到 {generateDto.BillingEndDate:yyyy-MM-dd}");
+                _logger.LogInformation($"💰 生成所有房间的月度账单: {generateDto.BillingStartDate:yyyy-MM-dd} 到 {generateDto.BillingEndDate:yyyy-MM-dd}");
 
                 var billings = new List<BillingRecordDto>();
 
@@ -399,28 +399,25 @@ namespace RoomDeviceManagement.Services
                 }
                 reader.Close();
 
-                // 为每个入住记录生成账单
+                // 为每个入住记录生成月度账单
                 foreach (var occupancy in occupancies)
                 {
-                    var billing = await GenerateBillingForOccupancy(connection, occupancy, generateDto);
-                    if (billing != null)
-                    {
-                        billings.Add(billing);
-                    }
+                    var monthlyBillings = await GenerateMonthlyBillingsForOccupancy(connection, occupancy, generateDto);
+                    billings.AddRange(monthlyBillings);
                 }
 
-                _logger.LogInformation($"✅ 成功生成 {billings.Count} 条账单记录");
+                _logger.LogInformation($"✅ 成功生成 {billings.Count} 条月度账单记录");
 
                 return new ApiResponse<List<BillingRecordDto>>
                 {
                     Success = true,
-                    Message = $"成功生成 {billings.Count} 条账单记录",
+                    Message = $"成功生成 {billings.Count} 条月度账单记录",
                     Data = billings
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ 生成所有房间账单失败");
+                _logger.LogError(ex, "❌ 生成所有房间的月度账单失败");
                 return new ApiResponse<List<BillingRecordDto>>
                 {
                     Success = false,
@@ -431,13 +428,13 @@ namespace RoomDeviceManagement.Services
         }
 
         /// <summary>
-        /// 根据老人ID生成账单
+        /// 根据老人ID生成月度账单
         /// </summary>
         public async Task<ApiResponse<List<BillingRecordDto>>> GenerateBillingsForElderlyAsync(decimal elderlyId, GenerateBillDto generateDto)
         {
             try
             {
-                _logger.LogInformation($"💰 生成老人ID={elderlyId}的账单: {generateDto.BillingStartDate:yyyy-MM-dd} 到 {generateDto.BillingEndDate:yyyy-MM-dd}");
+                _logger.LogInformation($"💰 为老人ID={elderlyId}生成月度账单: {generateDto.BillingStartDate:yyyy-MM-dd} 到 {generateDto.BillingEndDate:yyyy-MM-dd}");
 
                 var billings = new List<BillingRecordDto>();
 
@@ -486,28 +483,25 @@ namespace RoomDeviceManagement.Services
                 }
                 reader.Close();
 
-                // 为每个入住记录生成账单
+                // 为每个入住记录生成月度账单
                 foreach (var occupancy in occupancies)
                 {
-                    var billing = await GenerateBillingForOccupancy(connection, occupancy, generateDto);
-                    if (billing != null)
-                    {
-                        billings.Add(billing);
-                    }
+                    var monthlyBillings = await GenerateMonthlyBillingsForOccupancy(connection, occupancy, generateDto);
+                    billings.AddRange(monthlyBillings);
                 }
 
-                _logger.LogInformation($"✅ 成功为老人ID={elderlyId}生成 {billings.Count} 条账单记录");
+                _logger.LogInformation($"✅ 成功为老人ID={elderlyId}生成 {billings.Count} 条月度账单记录");
 
                 return new ApiResponse<List<BillingRecordDto>>
                 {
                     Success = true,
-                    Message = $"成功生成 {billings.Count} 条账单记录",
+                    Message = $"成功生成 {billings.Count} 条月度账单记录",
                     Data = billings
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"❌ 生成老人ID={elderlyId}的账单失败");
+                _logger.LogError(ex, $"❌ 生成老人ID={elderlyId}的月度账单失败");
                 return new ApiResponse<List<BillingRecordDto>>
                 {
                     Success = false,
@@ -623,7 +617,215 @@ namespace RoomDeviceManagement.Services
         }
 
         /// <summary>
-        /// 为单个入住记录生成账单
+        /// 为单个入住记录生成月度账单
+        /// </summary>
+        private async Task<List<BillingRecordDto>> GenerateMonthlyBillingsForOccupancy(OracleConnection connection, dynamic occupancy, GenerateBillDto generateDto)
+        {
+            try
+            {
+                _logger.LogInformation($"🗓️ 为入住记录ID={occupancy.OccupancyId}生成月度账单");
+
+                var billings = new List<BillingRecordDto>();
+                var dailyRate = generateDto.DailyRate ?? occupancy.RoomRate;
+
+                // 获取月度计费时间段
+                var monthlyPeriods = GetMonthlyBillingPeriods(
+                    occupancy.CheckInDate, 
+                    occupancy.CheckOutDate, 
+                    generateDto.BillingStartDate, 
+                    generateDto.BillingEndDate
+                );
+
+                foreach (var period in monthlyPeriods)
+                {
+                    // 检查该月是否已存在账单
+                    if (await IsMonthlyBillingExists(connection, occupancy.OccupancyId, period.Year, period.Month))
+                    {
+                        _logger.LogInformation($"入住记录ID={occupancy.OccupancyId}在{period.Year}年{period.Month}月的账单已存在，跳过");
+                        continue;
+                    }
+
+                    // 创建月度账单
+                    var billing = await CreateMonthlyBilling(connection, occupancy, period, dailyRate, generateDto.Remarks);
+                    if (billing != null)
+                    {
+                        billings.Add(billing);
+                        _logger.LogInformation($"✅ 成功生成{period.Year}年{period.Month}月账单，金额={billing.TotalAmount}");
+                    }
+                }
+
+                return billings;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"为入住记录 {occupancy.OccupancyId} 生成月度账单失败");
+                return new List<BillingRecordDto>();
+            }
+        }
+
+        /// <summary>
+        /// 获取月度计费时间段
+        /// </summary>
+        private List<MonthlyBillingPeriod> GetMonthlyBillingPeriods(DateTime checkInDate, DateTime? checkOutDate, DateTime requestStartDate, DateTime requestEndDate)
+        {
+            var periods = new List<MonthlyBillingPeriod>();
+            
+            // 确定实际计费的开始和结束时间
+            var actualStartDate = checkInDate > requestStartDate ? checkInDate : requestStartDate;
+            var actualEndDate = checkOutDate.HasValue ? 
+                (checkOutDate.Value < requestEndDate ? checkOutDate.Value : requestEndDate) : 
+                requestEndDate;
+
+            if (actualStartDate > actualEndDate)
+            {
+                return periods; // 无有效计费时间段
+            }
+
+            // 按月分割时间段
+            var currentMonth = new DateTime(actualStartDate.Year, actualStartDate.Month, 1);
+            
+            while (currentMonth <= actualEndDate)
+            {
+                var monthStart = currentMonth;
+                var monthEnd = monthStart.AddMonths(1).AddDays(-1); // 该月最后一天
+
+                // 计算该月的实际计费时间段
+                var billingStart = monthStart < actualStartDate ? actualStartDate : monthStart;
+                var billingEnd = monthEnd > actualEndDate ? actualEndDate : monthEnd;
+
+                if (billingStart <= billingEnd)
+                {
+                    periods.Add(new MonthlyBillingPeriod
+                    {
+                        Year = currentMonth.Year,
+                        Month = currentMonth.Month,
+                        StartDate = billingStart,
+                        EndDate = monthEnd, // 总是到月底，这是关键！
+                        ActualStartDate = billingStart,
+                        ActualEndDate = billingEnd
+                    });
+                }
+
+                currentMonth = currentMonth.AddMonths(1);
+            }
+
+            return periods;
+        }
+
+        /// <summary>
+        /// 检查月度账单是否已存在
+        /// </summary>
+        private async Task<bool> IsMonthlyBillingExists(OracleConnection connection, int occupancyId, int year, int month)
+        {
+            var sql = @"
+                SELECT COUNT(*) as count 
+                FROM RoomBilling 
+                WHERE occupancy_id = :occupancyId 
+                  AND EXTRACT(YEAR FROM billing_start_date) = :year
+                  AND EXTRACT(MONTH FROM billing_start_date) = :month";
+
+            using var command = new OracleCommand(sql, connection);
+            command.Parameters.Add(":occupancyId", OracleDbType.Int32).Value = occupancyId;
+            command.Parameters.Add(":year", OracleDbType.Int32).Value = year;
+            command.Parameters.Add(":month", OracleDbType.Int32).Value = month;
+
+            var count = Convert.ToInt32(await command.ExecuteScalarAsync());
+            return count > 0;
+        }
+
+        /// <summary>
+        /// 创建月度账单
+        /// </summary>
+        private async Task<BillingRecordDto?> CreateMonthlyBilling(
+            OracleConnection connection, 
+            dynamic occupancy, 
+            MonthlyBillingPeriod period, 
+            decimal dailyRate, 
+            string? remarks)
+        {
+            try
+            {
+                // 计算天数和总金额（从实际入住日期到月底）
+                var days = (period.EndDate - period.ActualStartDate).Days + 1;
+                var totalAmount = days * dailyRate;
+
+                // 插入账单记录
+                var insertSql = @"
+                    INSERT INTO RoomBilling (
+                        occupancy_id, elderly_id, room_id, billing_start_date, billing_end_date,
+                        days, daily_rate, total_amount, payment_status, paid_amount, unpaid_amount,
+                        billing_date, remarks, created_date, updated_date
+                    ) VALUES (
+                        :occupancyId, :elderlyId, :roomId, :startDate, :endDate,
+                        :days, :dailyRate, :totalAmount, '未支付', 0, :unpaidAmount,
+                        SYSDATE, :remarks, SYSDATE, SYSDATE
+                    ) RETURNING billing_id INTO :billingId";
+
+                using var insertCmd = new OracleCommand(insertSql, connection);
+                insertCmd.Parameters.Add(":occupancyId", OracleDbType.Int32).Value = occupancy.OccupancyId;
+                insertCmd.Parameters.Add(":elderlyId", OracleDbType.Decimal).Value = occupancy.ElderlyId;
+                insertCmd.Parameters.Add(":roomId", OracleDbType.Int32).Value = occupancy.RoomId;
+                insertCmd.Parameters.Add(":startDate", OracleDbType.Date).Value = period.ActualStartDate;
+                insertCmd.Parameters.Add(":endDate", OracleDbType.Date).Value = period.EndDate;
+                insertCmd.Parameters.Add(":days", OracleDbType.Int32).Value = days;
+                insertCmd.Parameters.Add(":dailyRate", OracleDbType.Decimal).Value = dailyRate;
+                insertCmd.Parameters.Add(":totalAmount", OracleDbType.Decimal).Value = totalAmount;
+                insertCmd.Parameters.Add(":unpaidAmount", OracleDbType.Decimal).Value = totalAmount;
+                insertCmd.Parameters.Add(":remarks", OracleDbType.Varchar2).Value = (object?)remarks ?? DBNull.Value;
+
+                var billingIdParam = new OracleParameter(":billingId", OracleDbType.Int32)
+                {
+                    Direction = ParameterDirection.Output
+                };
+                insertCmd.Parameters.Add(billingIdParam);
+
+                await insertCmd.ExecuteNonQueryAsync();
+                var billingId = ((OracleDecimal)billingIdParam.Value).ToInt32();
+
+                return new BillingRecordDto
+                {
+                    BillingId = billingId,
+                    OccupancyId = occupancy.OccupancyId,
+                    ElderlyId = occupancy.ElderlyId,
+                    ElderlyName = occupancy.ElderlyName,
+                    RoomId = occupancy.RoomId,
+                    RoomNumber = occupancy.RoomNumber,
+                    BillingStartDate = period.ActualStartDate,
+                    BillingEndDate = period.EndDate,
+                    Days = days,
+                    DailyRate = dailyRate,
+                    TotalAmount = totalAmount,
+                    PaymentStatus = "未支付",
+                    PaidAmount = 0,
+                    UnpaidAmount = totalAmount,
+                    BillingDate = DateTime.Now,
+                    Remarks = remarks,
+                    CreatedDate = DateTime.Now,
+                    UpdatedDate = DateTime.Now
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"创建{period.Year}年{period.Month}月账单失败");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 月度计费时间段类
+        /// </summary>
+        private class MonthlyBillingPeriod
+        {
+            public int Year { get; set; }
+            public int Month { get; set; }
+            public DateTime StartDate { get; set; }
+            public DateTime EndDate { get; set; }
+            public DateTime ActualStartDate { get; set; }
+            public DateTime ActualEndDate { get; set; }
+        }
+
+        /// <summary>
+        /// 为单个入住记录生成账单（原有方法，保持兼容性）
         /// </summary>
         private async Task<BillingRecordDto?> GenerateBillingForOccupancy(OracleConnection connection, dynamic occupancy, GenerateBillDto generateDto)
         {

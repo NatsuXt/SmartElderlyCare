@@ -8,11 +8,16 @@ namespace RoomDeviceManagement.Services
     {
         private readonly ChineseCompatibleDatabaseService _chineseDbService;
         private readonly ILogger<RoomManagementService> _logger;
+        private readonly RoomOccupancyService _roomOccupancyService;
 
-        public RoomManagementService(ChineseCompatibleDatabaseService chineseDbService, ILogger<RoomManagementService> logger)
+        public RoomManagementService(
+            ChineseCompatibleDatabaseService chineseDbService, 
+            ILogger<RoomManagementService> logger,
+            RoomOccupancyService roomOccupancyService)
         {
             _chineseDbService = chineseDbService;
             _logger = logger;
+            _roomOccupancyService = roomOccupancyService;
         }
 
         /// <summary>
@@ -748,96 +753,16 @@ namespace RoomDeviceManagement.Services
         {
             try
             {
-                _logger.LogInformation("💰 智能一键生成所有已退房入住记录的账单");
+                _logger.LogInformation($"💰 调用新的月度账单逻辑生成所有房间账单: {generateDto.BillingStartDate:yyyy-MM-dd} 到 {generateDto.BillingEndDate:yyyy-MM-dd}");
 
-                // 获取所有已退房的入住记录
-                var allOccupancyRecords = await _chineseDbService.GetAllOccupancyRecordsForBillingAsync();
+                // 直接调用RoomOccupancyService的新月度账单逻辑
+                var result = await _roomOccupancyService.GenerateAllBillingsAsync(generateDto);
                 
-                var generatedBillings = new List<BillingRecordDto>();
-                var skippedCount = 0;
-                var errorCount = 0;
-
-                foreach (var record in allOccupancyRecords)
-                {
-                    try
-                    {
-                        // 检查是否已存在该入住记录的账单（按occupancy_id）
-                        bool billingExists = await _chineseDbService.BillingExistsByOccupancyIdAsync(record.OccupancyId);
-
-                        if (billingExists)
-                        {
-                            _logger.LogInformation($"入住记录ID={record.OccupancyId}（老人：{record.ElderlyName}）已存在账单，跳过生成");
-                            skippedCount++;
-                            continue;
-                        }
-
-                        // 直接使用入住记录的入住日期和退房日期
-                        var billingStartDate = record.CheckInDate.Date;
-                        var billingEndDate = record.CheckOutDate!.Value.Date; // 已确保有退房日期
-
-                        // 获取房间费率
-                        var roomRate = await _chineseDbService.GetRoomRateAsync(record.RoomId);
-                        
-                        // 计算天数：同天入住退房算1天，否则计算实际天数
-                        var days = Math.Max(1, (billingEndDate - billingStartDate).Days + 1);
-                        var totalAmount = roomRate * days;
-
-                        // 创建账单记录（严格按照RoomBilling模型格式）
-                        var billingId = await _chineseDbService.CreateBillingRecordAsync(
-                            record.OccupancyId,
-                            record.ElderlyId,
-                            record.RoomId,
-                            billingStartDate,
-                            billingEndDate,
-                            days,
-                            roomRate,
-                            totalAmount
-                        );
-
-                        generatedBillings.Add(new BillingRecordDto
-                        {
-                            BillingId = billingId,
-                            OccupancyId = record.OccupancyId,
-                            ElderlyId = record.ElderlyId,
-                            ElderlyName = record.ElderlyName,
-                            RoomId = record.RoomId,
-                            RoomNumber = record.RoomNumber,
-                            BillingStartDate = billingStartDate,
-                            BillingEndDate = billingEndDate,
-                            Days = days,
-                            DailyRate = roomRate,
-                            TotalAmount = totalAmount,
-                            PaymentStatus = "未支付",
-                            PaidAmount = 0,
-                            UnpaidAmount = totalAmount,
-                            BillingDate = DateTime.Now,
-                            Remarks = $"基于入住记录生成 - 入住:{billingStartDate:yyyy-MM-dd} 退房:{billingEndDate:yyyy-MM-dd}",
-                            CreatedDate = DateTime.Now,
-                            UpdatedDate = DateTime.Now
-                        });
-
-                        _logger.LogInformation($"✅ 成功为入住记录ID={record.OccupancyId}（老人：{record.ElderlyName}，房间：{record.RoomNumber}）生成账单，天数：{days}天，金额：{totalAmount}元");
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, $"生成入住记录ID={record.OccupancyId}的账单失败，跳过");
-                        errorCount++;
-                    }
-                }
-
-                var summary = $"账单生成完成：成功生成 {generatedBillings.Count} 条账单，跳过 {skippedCount} 条（已存在账单），失败 {errorCount} 条";
-                _logger.LogInformation($"✅ {summary}");
-
-                return new ApiResponse<List<BillingRecordDto>>
-                {
-                    Success = true,
-                    Message = summary,
-                    Data = generatedBillings
-                };
+                return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ 智能生成所有入住记录账单失败");
+                _logger.LogError(ex, "❌ 生成所有房间的月度账单失败");
                 return new ApiResponse<List<BillingRecordDto>>
                 {
                     Success = false,
@@ -854,111 +779,12 @@ namespace RoomDeviceManagement.Services
         {
             try
             {
-                _logger.LogInformation($"💰 生成老人ID={elderlyId}的账单: {generateDto.BillingStartDate:yyyy-MM-dd} 到 {generateDto.BillingEndDate:yyyy-MM-dd}");
+                _logger.LogInformation($"💰 调用新的月度账单逻辑为老人ID={elderlyId}生成账单: {generateDto.BillingStartDate:yyyy-MM-dd} 到 {generateDto.BillingEndDate:yyyy-MM-dd}");
 
-                // 获取指定老人的入住记录
-                var occupancyRecords = await _chineseDbService.GetOccupancyRecordsForBillingAsync(
-                    generateDto.BillingStartDate, 
-                    generateDto.BillingEndDate, 
-                    (int)elderlyId
-                );
-
-                var generatedBillings = new List<BillingRecordDto>();
-
-                foreach (var record in occupancyRecords)
-                {
-                    try
-                    {
-                        // 检查是否已存在该时间段的账单
-                        bool billingExists = await _chineseDbService.BillingExistsAsync(
-                            record.OccupancyId,
-                            generateDto.BillingStartDate,
-                            generateDto.BillingEndDate
-                        );
-
-                        if (billingExists)
-                        {
-                            _logger.LogWarning($"老人ID={elderlyId}的入住记录ID={record.OccupancyId}在{generateDto.BillingStartDate:yyyy-MM-dd}到{generateDto.BillingEndDate:yyyy-MM-dd}期间已存在账单，跳过生成");
-                            continue;
-                        }
-
-                        // 获取房间费率
-                        var roomRate = await _chineseDbService.GetRoomRateAsync(record.RoomId);
-                        
-                        // 计算实际应收费天数（避免为未来时间收费）
-                        var actualBillingStartDate = generateDto.BillingStartDate > record.CheckInDate ? generateDto.BillingStartDate : record.CheckInDate;
-                        var actualBillingEndDate = generateDto.BillingEndDate;
-                        
-                        // 如果老人已退房，账单结束日期不能超过退房日期
-                        if (record.CheckOutDate.HasValue && record.CheckOutDate.Value < generateDto.BillingEndDate)
-                        {
-                            actualBillingEndDate = record.CheckOutDate.Value;
-                        }
-                        
-                        // 如果账单结束日期在未来，只收费到今天
-                        var today = DateTime.Today;
-                        if (actualBillingEndDate > today)
-                        {
-                            actualBillingEndDate = today;
-                            _logger.LogInformation($"老人ID={elderlyId}账单结束日期调整为今天({today:yyyy-MM-dd})，避免为未来时间收费");
-                        }
-                        
-                        // 如果调整后的开始日期晚于结束日期，跳过生成
-                        if (actualBillingStartDate > actualBillingEndDate)
-                        {
-                            _logger.LogWarning($"老人ID={elderlyId}的入住记录ID={record.OccupancyId}的实际账单期间无效，跳过生成");
-                            continue;
-                        }
-                        
-                        // 创建账单记录（使用调整后的日期）
-                        var billingId = await _chineseDbService.CreateBillingRecordAsync(
-                            record.OccupancyId,
-                            record.ElderlyId,
-                            record.RoomId,
-                            actualBillingStartDate,
-                            actualBillingEndDate,
-                            roomRate
-                        );
-
-                        var days = (actualBillingEndDate - actualBillingStartDate).Days + 1;
-                        var totalAmount = roomRate * days;
-
-                        generatedBillings.Add(new BillingRecordDto
-                        {
-                            BillingId = billingId,
-                            OccupancyId = record.OccupancyId,
-                            ElderlyId = record.ElderlyId,
-                            ElderlyName = record.ElderlyName,
-                            RoomId = record.RoomId,
-                            RoomNumber = record.RoomNumber,
-                            BillingStartDate = actualBillingStartDate,
-                            BillingEndDate = actualBillingEndDate,
-                            Days = days,
-                            DailyRate = roomRate,
-                            TotalAmount = totalAmount,
-                            PaymentStatus = "未支付",
-                            PaidAmount = 0,
-                            UnpaidAmount = totalAmount,
-                            BillingDate = DateTime.Now,
-                            Remarks = generateDto.Remarks,
-                            CreatedDate = DateTime.Now,
-                            UpdatedDate = DateTime.Now
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, $"生成入住记录ID={record.OccupancyId}的账单失败，跳过");
-                    }
-                }
-
-                _logger.LogInformation($"✅ 成功为老人ID={elderlyId}生成 {generatedBillings.Count} 条账单记录");
-
-                return new ApiResponse<List<BillingRecordDto>>
-                {
-                    Success = true,
-                    Message = $"成功为老人生成 {generatedBillings.Count} 条账单记录",
-                    Data = generatedBillings
-                };
+                // 直接调用RoomOccupancyService的新月度账单逻辑
+                var result = await _roomOccupancyService.GenerateBillingsForElderlyAsync(elderlyId, generateDto);
+                
+                return result;
             }
             catch (Exception ex)
             {
