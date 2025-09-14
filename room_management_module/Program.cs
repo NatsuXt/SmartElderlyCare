@@ -128,6 +128,14 @@ async Task TestAllApis(string testBaseUrl = "http://localhost:5000")
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 🔧 配置日志提供程序 - 禁用Windows EventLog以避免权限问题
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Logging.AddDebug();
+}
+
 // 🔧 配置生产环境设置
 if (builder.Environment.IsProduction())
 {

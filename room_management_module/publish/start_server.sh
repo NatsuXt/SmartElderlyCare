@@ -1,50 +1,110 @@
-#!/bin/bash
+﻿#!/bin/bash#!/bin/bash#!/bin/bash#!/bin/bash
 
-# 智慧养老系统 - 房间入住管理模块启动脚本
-# 版本: v2.0
-# 构建日期: 2025年9月2日
 
-echo "=== 🚀 智慧养老系统启动脚本 v2.0 ==="
-echo "功能模块: 房间入住管理 + 设备管理 + 健康监测 + 电子围栏"
-echo "构建时间: 2025年9月2日 10:45"
+
+echo "============================================"
+
+echo "  Smart Elderly Care System - Server v2.0"
+
+echo "============================================"echo "============================================"# 智慧养老系统启动脚本 (Linux/macOS)
+
 echo ""
 
-# 检查.NET环境
-echo "🔍 检查.NET运行环境..."
-if command -v dotnet &> /dev/null; then
-    dotnet --version
-    echo "✅ .NET环境检查通过"
-else
-    echo "❌ 未找到.NET运行环境，请先安装.NET 8.0 Runtime"
-    exit 1
+echo "  Smart Elderly Care System - Server v2.0"
+
+# Set environment variables
+
+export ASPNETCORE_ENVIRONMENT=Productionecho "============================================"echo "启动智慧养老系统..."
+
+export ASPNETCORE_URLS=http://0.0.0.0:3003
+
+echo ""
+
+echo "[INFO] Starting Smart Elderly Care System Server..."
+
+echo "[INFO] Environment: $ASPNETCORE_ENVIRONMENT"echo ""echo "============================================"
+
+echo "[INFO] Server Port: 3003"
+
+echo "[INFO] API Documentation: http://localhost:3003/swagger"# Set environment variables
+
+echo ""
+
+export ASPNETCORE_ENVIRONMENT=Productionecho "   智慧养老系统 - 房间与设备管理模块 v2.0"
+
+# Check if .NET Runtime is available
+
+echo "[INFO] Checking .NET Runtime..."export ASPNETCORE_URLS=http://0.0.0.0:3003
+
+if ! command -v dotnet &> /dev/null; then
+
+    echo "[ERROR] .NET Runtime not found, please install .NET 8.0 or higher"# 设置环境变量echo "============================================"
+
+    echo "[INFO] Download: https://dotnet.microsoft.com/download"
+
+    exit 1echo "[INFO] Starting Smart Elderly Care System Server..."
+
 fi
 
+echo "[INFO] Environment: $ASPNETCORE_ENVIRONMENT"export ASPNETCORE_ENVIRONMENT=Productionecho
+
+# Start the application
+
+echo "[INFO] Starting application..."echo "[INFO] Server Port: 3003"
+
 echo ""
 
-# 检查端口占用
-echo "🔍 检查端口3003占用情况..."
-if lsof -Pi :3003 -sTCP:LISTEN -t >/dev/null 2>&1; then
-    echo "⚠️  端口3003已被占用，尝试停止现有进程..."
-    sudo kill -9 $(lsof -Pi :3003 -sTCP:LISTEN -t) 2>/dev/null || true
-    sleep 2
+dotnet RoomDeviceManagement.dllecho "[INFO] API Documentation: http://localhost:3003/swagger"export ASPNETCORE_URLS=http://0.0.0.0:3003
+
+
+
+echo ""echo ""
+
+echo "[INFO] Server stopped."
+echo "[INFO] 启动智慧养老系统服务器..."
+
+# Check if .NET Runtime is available
+
+echo "[INFO] Checking .NET Runtime..."echo "环境: $ASPNETCORE_ENVIRONMENT"echo "[INFO] 服务端口: 3003"
+
+if ! command -v dotnet &> /dev/null; then
+
+    echo "[ERROR] .NET Runtime not found, please install .NET 8.0 or higher"echo "监听地址: $ASPNETCORE_URLS"echo "[INFO] API文档: http://localhost:3003/swagger"
+
+    echo "[INFO] Download: https://dotnet.microsoft.com/download"
+
+    exit 1echo ""echo
+
 fi
 
-echo "✅ 端口3003可用"
-echo ""
 
-# 启动应用
-echo "🚀 启动智慧养老系统..."
-echo "📍 访问地址: http://47.96.238.102:3003/swagger"
-echo "🏨 房间入住管理: /api/RoomOccupancy/*"
-echo ""
 
-# 设置环境变量
-export ASPNETCORE_ENVIRONMENT=Production
-export DOTNET_URLS="http://*:3003"
+# Start the application
 
-# 启动应用
-dotnet RoomDeviceManagement.dll
+echo "[INFO] Starting application..."# 检查.NET运行时echo "[INFO] 检查.NET运行时..."
 
 echo ""
-echo "📋 如需后台运行，请使用:"
-echo "nohup dotnet RoomDeviceManagement.dll > app.log 2>&1 &"
+
+dotnet RoomDeviceManagement.dllif ! command -v dotnet &> /dev/null; thenif ! command -v dotnet &> /dev/null; then
+
+
+
+echo ""    echo "错误: 未找到dotnet运行时，请先安装.NET 8.0 Runtime"    echo "[ERROR] 未找到.NET运行时，请先安装.NET 6.0或更高版本"
+
+echo "[INFO] Server stopped."
+    exit 1    echo "[INFO] 下载地址: https://dotnet.microsoft.com/download"
+
+fi    exit 1
+
+fi
+
+echo "正在启动应用程序..."
+
+dotnet RoomDeviceManagement.dllecho "[INFO] 启动应用程序..."
+echo "[INFO] 按 Ctrl+C 停止服务器"
+echo
+
+dotnet RoomDeviceManagement.dll --urls "http://*:3003"
+
+echo
+echo "[INFO] 服务器已停止"
